@@ -1,5 +1,6 @@
 var crypto = require("crypto");
 var https = require("https");
+var fs = require("fs");
 var MD5 = function (str) {
   return crypto.createHash("md5").update(str).digest("hex");
 };
@@ -38,7 +39,8 @@ var QQmusicSign = (function (c, a) {
 );
 
 /** 二次封装成更容易使用 */
-function getQQmusicData(h, i) {
+var qqMusicCookie = "";
+function getQQmusicData(h, i, useCookie) {
   var d = Array.isArray(h);
   h = d ? h : [h];
   var j = JSON.stringify(
@@ -66,7 +68,23 @@ function getQQmusicData(h, i) {
         new Date().getTime() +
         "&sign=" +
         QQmusicSign(j),
-      { method: "POST" },
+      {
+        method: "POST",
+        headers: {
+          Accept: "*/*",
+          "Accept-Language": "zh-CN",
+          "User-Agent":
+            "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/5.0)",
+          Cookie:
+            useCookie === true
+              ? qqMusicCookie ||
+                (qqMusicCookie = String(
+                  fs.readFileSync(__dirname + "/secret/qqMusicCookie.secret")
+                ).trim())
+              : useCookie || "",
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      },
       function (b) {
         var a = [];
         b.on("data", function (c) {
