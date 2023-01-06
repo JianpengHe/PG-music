@@ -91,6 +91,7 @@ export declare class ReliableSocket {
     constructor(options: net.NetConnectOpts, reliableConnectOpts?: IReliableConnectOpts);
     close(): void;
 }
+export declare const getNumberLen: (num?: number, isUnsigned?: boolean, isPower?: boolean) => number;
 export declare class Buf {
     lastReadValue: any;
     offset: number;
@@ -98,6 +99,8 @@ export declare class Buf {
     constructor(buf?: Buffer, offset?: number);
     UIntLEToBuffer(number: number, byteLength?: number): Buffer;
     UIntBEToBuffer(number: number, byteLength?: number): Buffer;
+    IntLEToBuffer(number: number, byteLength?: number): Buffer;
+    IntBEToBuffer(number: number, byteLength?: number): Buffer;
     alloc(length: number, fill?: number): this;
     concat(...buf: Buffer[]): this;
     read(length: number, offset?: number): Buffer;
@@ -107,7 +110,8 @@ export declare class Buf {
     write(buf: Buffer, offset?: number): this;
     writeUIntBE(number: number, byteLength?: number, offset?: number): this;
     writeUIntLE(number: number, byteLength?: number, offset?: number): this;
-    writeIntLE(number: number, byteLength: number, offset?: number): this;
+    writeIntBE(number: number, byteLength?: number, offset?: number): this;
+    writeIntLE(number: number, byteLength?: number, offset?: number): this;
     writeStringNUL(str: string | Buffer, offset?: number): this;
     writeStringPrefix(str: string | Buffer, prefixCallBackFn?: (length: number) => Buffer | undefined, offset?: number): this;
 }
