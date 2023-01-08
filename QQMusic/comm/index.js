@@ -22,7 +22,7 @@ const sleep = (time) => new Promise((r) => setTimeout(() => r(), time));
 // fs.mkdir(__dirname + "/request_cache/", () => {});
 const readFile = (obj) =>
   new Promise((r) =>
-    fs.readFile(__dirname + "/request_cache/" + obj.path, (err, file) => {
+    fs.readFile(obj.path, (err, file) => {
       if (err || !file) {
         r(obj);
         return;
@@ -87,20 +87,38 @@ const requestQQmusic = (reqBody, cb, err = 0) => {
     .on("error", error)
     .end(reqBody);
 };
+const save_request_cache = (obj) => {
+  zlib.deflate(Buffer.from(JSON.stringify(obj.data)), (err, file) => {
+    if (err || !file) {
+      return;
+    }
+    fs.writeFile(obj.path, file, () => {});
+  });
+};
 const request = async (req, useCache = true) => {
   const isArray = Array.isArray(req);
   req = isArray ? req : [req];
   const objs = req.map((item) => {
     item.param = keySort(item.param);
-    return {
+    const ob = {
       item,
-      path: `${item.method}.${MD5(JSON.stringify(item.param))}.deflate`,
+      path: "",
       data: null,
+      save_request_cache,
+      read_request_cache: readFile,
     };
+    ob.path =
+      useCache &&
+      (useCache === true
+        ? `${__dirname}/request_cache/${item.method}.${MD5(
+            JSON.stringify(item.param)
+          )}.deflate`
+        : useCache(ob));
+    return ob;
   });
 
   if (useCache) {
-    await Promise.all(objs.map(readFile));
+    await Promise.all(objs.map((obj) => obj.read_request_cache(obj)));
   }
 
   const needReq = objs.filter(({ data }) => !data);
@@ -127,25 +145,19 @@ const request = async (req, useCache = true) => {
       }
     )
   );
-  //console.log(reqBody);
   await sleep(
     last_req_time + Req_Valve - (last_req_time = new Date().getTime())
   );
   const res = await new Promise((r) => requestQQmusic(reqBody, r));
   needReq.forEach((obj, index) => {
     const data = res["req_" + index];
-    if (data?.code !== 0) {
-      //console.log(res);
+    if (data?.code !== 0 && data?.code !== 24001) {
+      console.log(data, req);
       throw new Error("code is not 0");
     }
     obj.data = data.data;
     if (useCache) {
-      zlib.deflate(Buffer.from(JSON.stringify(data.data)), (err, file) => {
-        if (err || !file) {
-          return;
-        }
-        fs.writeFile(__dirname + "/request_cache/" + obj.path, file, () => {});
-      });
+      obj.save_request_cache(obj);
     }
   });
   return isArray ? objs.map(({ data }) => data) : objs[0].data;
@@ -222,6 +234,23 @@ const GetCommentCount = (ids) => ({
   },
 });
 
+const GetPlayLyricInfo = (songID) => ({
+  module: "music.musichallSong.PlayLyricInfo",
+  method: "GetPlayLyricInfo",
+  param: {
+    qrc: 1,
+    qrc_t: 0,
+    roma: 0,
+    roma_t: 0,
+    //singerName: "5a+M5aOr5bGx5LiL",
+    songID,
+    // songName: "6ZmI5aWV6L+F",
+    trans: 0,
+    trans_t: 0,
+    type: 0,
+  },
+});
+
 module.exports = {
   keySort,
   request,
@@ -232,6 +261,7 @@ module.exports = {
   GetAlbumList,
   DoSearchForQQMusicDesktop,
   GetCommentCount,
+  GetPlayLyricInfo,
 };
 // console.log(keySort({ c: 99, a: { d: 5, c: [3, 2, 1] } }));
 

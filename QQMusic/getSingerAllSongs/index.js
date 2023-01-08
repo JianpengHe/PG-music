@@ -10,6 +10,7 @@ const {
 } = require("../comm/index");
 const { XML } = require("../comm/XML");
 const { replace, mysql } = require("../comm/mysql_con");
+const { getLyric } = require("../LyricDecode/getLyric");
 
 const singer = {
   "003Nz2So3XXYek": "陈奕迅",
@@ -268,7 +269,26 @@ const commentCount = async () => {
     );
     //return;
   }
-  //console.log();
+};
+
+const getLyrics = async () => {
+  const song_ids = flat(
+    await mysql.query(
+      "SELECT song_id FROM `song` WHERE `lyric` IS NULL ORDER BY `song_id` ASC",
+      []
+    ),
+    "song_id"
+  );
+  let i = 0;
+  for (const req of unFlat(song_ids, 20)) {
+    console.log("getLyrics", song_ids.length - i * 20, i);
+    i++;
+    await replace(
+      "song",
+      (await getLyric(req)).filter(({ song_id }) => song_id)
+    );
+    // return;
+  }
 };
 
 (async () => {
@@ -283,6 +303,7 @@ const commentCount = async () => {
     console.log(song_conut, album_conut, search_conut, song_ids.size);
   }
   await commentCount();
+  await getLyrics();
   setTimeout(() => {
     process.exit();
   }, 1000);

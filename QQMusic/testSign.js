@@ -1,17 +1,23 @@
 const { getQQmusicData } = require("./QQmusicSign.js");
 getQQmusicData(
   {
-    module: "GlobalComment.GlobalCommentReadServer",
-    method: "GetCommentCount",
+    module: "music.musichallSong.PlayLyricInfo",
+    method: "GetPlayLyricInfo",
     param: {
-      request_list: [
-        { biz_type: 1, biz_id: "1249550", biz_sub_type: 1 },
-        { biz_type: 1, biz_id: "260677", biz_sub_type: 1 },
-      ],
+      qrc: 1,
+      qrc_t: 0,
+      roma: 0,
+      roma_t: 0,
+      //singerName: "5a+M5aOr5bGx5LiL",
+      songID: 260677,
+      // songName: "6ZmI5aWV6L+F",
+      trans: 0,
+      trans_t: 0,
+      type: 0,
     },
   },
   ({ data }) => {
-    console.log(data.response_list);
+    console.log(data);
     //console.log(data);
   },
   "uin=10849964;"
