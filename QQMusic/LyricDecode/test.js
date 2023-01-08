@@ -8,4 +8,5 @@ const fs = require("fs");
 //console.log(String(zlib.inflateSync(Buffer.from("","hex"))));process.exit()
 const text = String(fs.readFileSync("./lyric_test.txt")).trim();
 const buf = Buffer.from(text, "hex");
-console.log(String(zlib.inflateSync(LyricDecode(buf, buf.length))));
+const result = String(zlib.inflateSync(LyricDecode(buf, buf.length)));
+console.log(result);
