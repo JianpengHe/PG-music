@@ -1,3 +1,4 @@
 /node_modules
-request_cache
+*.deflate
 *.secret
+*.qqlyric

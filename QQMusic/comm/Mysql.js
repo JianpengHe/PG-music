@@ -940,7 +940,7 @@ class Mysql extends TypedEventEmitter {
             buf.writeUIntLE(prepare.statementId, 4);
             buf.writeUIntLE(0); // 0x00: CURSOR_TYPE_NO_CURSOR、0x01: CURSOR_TYPE_READ_ONLY、0x02: CURSOR_TYPE_FOR_UPDATE、0x04: CURSOR_TYPE_SCROLLABLE
             buf.writeUIntLE(1, 4);
-            buf.writeUIntLE(Number(params.reduce((previousValue, currentValue, index) => Number(previousValue) + (currentValue === null ? 1 << index : 0), 0)));
+            buf.writeUIntLE(Number(params.reduce((previousValue, currentValue, index) => Number(previousValue) + (currentValue === null ? 1 << index : 0), 0)), ((params.length + 7) / 8) | 0);
             buf.writeUIntLE(1);
         }
         const dataBuf = new MysqlBuf();

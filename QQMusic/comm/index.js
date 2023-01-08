@@ -3,6 +3,12 @@ const zlib = require("zlib");
 const https = require("https");
 const crypto = require("crypto");
 // const { QQmusicSign } = require("../QQmusicSign.js");
+
+/** 请求的频率 */
+const Req_Valve = 2000;
+
+let last_req_time = 0;
+
 const MD5 = (str) => crypto.createHash("md5").update(str).digest("hex");
 const keySort = (obj) => {
   if (obj instanceof Object && !Array.isArray(obj)) {
@@ -12,6 +18,8 @@ const keySort = (obj) => {
   }
   return obj;
 };
+const sleep = (time) => new Promise((r) => setTimeout(() => r(), time));
+// fs.mkdir(__dirname + "/request_cache/", () => {});
 const readFile = (obj) =>
   new Promise((r) =>
     fs.readFile(__dirname + "/request_cache/" + obj.path, (err, file) => {
@@ -33,14 +41,14 @@ const readFile = (obj) =>
       });
     })
   );
-const requestQQmusic = (reqBody, cb, useCookie, err = 0) => {
+const requestQQmusic = (reqBody, cb, err = 0) => {
   if (err > 5) {
     console.log(reqBody);
     throw new Error("err too more");
   }
   const error = (e) => {
     console.log(e);
-    setTimeout(() => requestQQmusic(reqBody, cb, useCookie, err + 1), 3000);
+    setTimeout(() => requestQQmusic(reqBody, cb, err + 1), 3000);
   };
   https
     .request(
@@ -52,13 +60,7 @@ const requestQQmusic = (reqBody, cb, useCookie, err = 0) => {
           "Accept-Language": "zh-CN",
           "User-Agent":
             "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/5.0)",
-          Cookie:
-            useCookie === true
-              ? qqMusicCookie ||
-                (qqMusicCookie = String(
-                  fs.readFileSync(__dirname + "/../secret/qqMusicCookie.secret")
-                ).trim())
-              : useCookie || "",
+          Cookie: "uin=10849964;",
           "Content-Type": "application/x-www-form-urlencoded",
         },
       },
@@ -85,15 +87,11 @@ const requestQQmusic = (reqBody, cb, useCookie, err = 0) => {
     .on("error", error)
     .end(reqBody);
 };
-const request = async (req) => {
+const request = async (req, useCache = true) => {
   const isArray = Array.isArray(req);
   req = isArray ? req : [req];
-  let useCookie = false;
   const objs = req.map((item) => {
     item.param = keySort(item.param);
-    if (item.method === "DoSearchForQQMusicDesktop") {
-      useCookie = true;
-    }
     return {
       item,
       path: `${item.method}.${MD5(JSON.stringify(item.param))}.deflate`,
@@ -101,7 +99,10 @@ const request = async (req) => {
     };
   });
 
-  await Promise.all(objs.map(readFile));
+  if (useCache) {
+    await Promise.all(objs.map(readFile));
+  }
+
   const needReq = objs.filter(({ data }) => !data);
   if (!needReq.length) {
     return isArray ? objs.map(({ data }) => data) : objs[0].data;
@@ -127,7 +128,10 @@ const request = async (req) => {
     )
   );
   //console.log(reqBody);
-  const res = await new Promise((r) => requestQQmusic(reqBody, r, useCookie));
+  await sleep(
+    last_req_time + Req_Valve - (last_req_time = new Date().getTime())
+  );
+  const res = await new Promise((r) => requestQQmusic(reqBody, r));
   needReq.forEach((obj, index) => {
     const data = res["req_" + index];
     if (data?.code !== 0) {
@@ -135,17 +139,100 @@ const request = async (req) => {
       throw new Error("code is not 0");
     }
     obj.data = data.data;
-    zlib.deflate(Buffer.from(JSON.stringify(data.data)), (err, file) => {
-      if (err || !file) {
-        return;
-      }
-      fs.writeFile(__dirname + "/request_cache/" + obj.path, file, () => {});
-    });
+    if (useCache) {
+      zlib.deflate(Buffer.from(JSON.stringify(data.data)), (err, file) => {
+        if (err || !file) {
+          return;
+        }
+        fs.writeFile(__dirname + "/request_cache/" + obj.path, file, () => {});
+      });
+    }
   });
   return isArray ? objs.map(({ data }) => data) : objs[0].data;
 };
 
-module.exports = { keySort, request };
+const GetSingerDetail = (singer_mid) => ({
+  module: "music.musichallSinger.SingerInfoInter",
+  method: "GetSingerDetail",
+  param: {
+    singer_mids: [singer_mid],
+    pic: 1,
+    group_singer: 1,
+    wiki_singer: 1,
+    ex_singer: 1,
+  },
+});
+
+const GetAlbumDetail = (albumMid) => ({
+  module: "music.musichallAlbum.AlbumInfoServer",
+  method: "GetAlbumDetail",
+  param: { albumMid },
+});
+const GetAlbumSongList = (albumMid) => ({
+  module: "music.musichallAlbum.AlbumSongList",
+  method: "GetAlbumSongList",
+  param: { albumMid, begin: 0, num: 999, order: 2 },
+});
+
+const GetSingerSongList = (singerMid, start = 0) => ({
+  module: "music.musichallSong.SongListInter",
+  method: "GetSingerSongList",
+  param: {
+    singerMid,
+    begin: start * GetSingerSongList.MAX_num_per_page,
+    num: GetSingerSongList.MAX_num_per_page,
+    order: 1,
+  },
+});
+GetSingerSongList.MAX_num_per_page = 100;
+
+const GetAlbumList = (singermid, start = 0) => ({
+  module: "music.musichallAlbum.AlbumListServer",
+  method: "GetAlbumList",
+  param: {
+    sort: 5,
+    singermid,
+    begin: start * GetAlbumList.MAX_num_per_page,
+    num: GetAlbumList.MAX_num_per_page,
+  },
+});
+GetAlbumList.MAX_num_per_page = 80;
+
+const DoSearchForQQMusicDesktop = (query, start = 0) => ({
+  module: "music.search.SearchCgiService",
+  method: "DoSearchForQQMusicDesktop",
+  param: {
+    num_per_page: DoSearchForQQMusicDesktop.MAX_num_per_page,
+    page_num: start + 1,
+    query,
+    search_type: 0,
+  },
+});
+DoSearchForQQMusicDesktop.MAX_num_per_page = 60;
+
+const GetCommentCount = (ids) => ({
+  module: "GlobalComment.GlobalCommentReadServer",
+  method: "GetCommentCount",
+  param: {
+    request_list: ids.map((id) => ({
+      biz_type: 1,
+      biz_id: String(id),
+      biz_sub_type: 1,
+    })),
+  },
+});
+
+module.exports = {
+  keySort,
+  request,
+  GetAlbumDetail,
+  GetAlbumSongList,
+  GetSingerDetail,
+  GetSingerSongList,
+  GetAlbumList,
+  DoSearchForQQMusicDesktop,
+  GetCommentCount,
+};
 // console.log(keySort({ c: 99, a: { d: 5, c: [3, 2, 1] } }));
 
 // request({

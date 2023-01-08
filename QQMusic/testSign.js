@@ -1,23 +1,36 @@
 const { getQQmusicData } = require("./QQmusicSign.js");
 getQQmusicData(
   {
-    module: "music.musichallSinger.SingerInfoInter",
-    method: "GetSingerDetail",
+    module: "GlobalComment.GlobalCommentReadServer",
+    method: "GetCommentCount",
     param: {
-      singer_mids: ["003Nz2So3XXYek"],
-      pic: 1,
-      group_singer: 1,
-      wiki_singer: 1,
-      ex_singer: 1,
+      request_list: [
+        { biz_type: 1, biz_id: "1249550", biz_sub_type: 1 },
+        { biz_type: 1, biz_id: "260677", biz_sub_type: 1 },
+      ],
     },
   },
   ({ data }) => {
-    console.log(data.singer_list[0]);
-  }
+    console.log(data.response_list);
+    //console.log(data);
+  },
+  "uin=10849964;"
 );
 0 &&
   getQQmusicData(
     [
+      /** 歌手详情 */
+      {
+        module: "music.musichallSinger.SingerInfoInter",
+        method: "GetSingerDetail",
+        param: {
+          singer_mids: ["003Nz2So3XXYek"],
+          pic: 1,
+          group_singer: 1,
+          wiki_singer: 1,
+          ex_singer: 1,
+        },
+      },
       /** 获取歌手专辑 */
       {
         module: "music.musichallAlbum.AlbumListServer",
@@ -39,7 +52,7 @@ getQQmusicData(
       {
         module: "music.musichallAlbum.AlbumSongList",
         method: "GetAlbumSongList",
-        param: { albumMid: "004Z85XP1c25b7", begin: 0, num: 60, order: 2 },
+        param: { albumMid: "004Z85XP1c25b7", begin: 0, num: 999, order: 2 },
       },
       /** 获取歌手歌曲 */
       {
@@ -48,14 +61,14 @@ getQQmusicData(
         param: {
           singerMid: "003Nz2So3XXYek",
           begin: 0,
-          num: 30,
+          num: 100,
           order: 1,
         },
       },
       /** 搜索歌曲 */
       {
-        method: "DoSearchForQQMusicDesktop",
         module: "music.search.SearchCgiService",
+        method: "DoSearchForQQMusicDesktop",
         param: {
           num_per_page: 60,
           page_num: 1,
@@ -65,8 +78,8 @@ getQQmusicData(
       },
       /** 获取歌曲评论数 */
       {
-        method: "GetCommentCount",
         module: "GlobalComment.GlobalCommentReadServer",
+        method: "GetCommentCount",
         param: {
           request_list: [
             { biz_type: 1, biz_id: "1249550", biz_sub_type: 1 },
