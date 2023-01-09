@@ -8,7 +8,18 @@ SET time_zone = "+00:00";
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
 /*!40101 SET NAMES utf8mb4 */;
 
+CREATE DATABASE IF NOT EXISTS `qq_music` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+USE `qq_music`;
 
+DELIMITER $$
+DROP PROCEDURE IF EXISTS `统计`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `统计` ()  NO SQL
+SELECT * FROM (SELECT grp_from_song_id as id,COUNT(*) as num ,sum(comment_count) as total_comment_count FROM `song` GROUP by grp_from_song_id) a INNER JOIN song b on a.id=b.song_id  
+ORDER BY `a`.`total_comment_count` DESC$$
+
+DELIMITER ;
+
+DROP TABLE IF EXISTS `album`;
 CREATE TABLE `album` (
   `albumID` int(1) UNSIGNED NOT NULL,
   `albumMid` varchar(32) NOT NULL,
@@ -21,6 +32,7 @@ CREATE TABLE `album` (
   `introduce` text
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+DROP TABLE IF EXISTS `media`;
 CREATE TABLE `media` (
   `media_mid` varchar(32) NOT NULL,
   `size_96aac` int(1) UNSIGNED DEFAULT NULL,
@@ -31,13 +43,14 @@ CREATE TABLE `media` (
   `size_flac_file` int(1) UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+DROP TABLE IF EXISTS `singer`;
 CREATE TABLE `singer` (
   `singer_id` int(1) UNSIGNED NOT NULL DEFAULT '0',
   `singer_mid` varchar(32) DEFAULT NULL,
   `name` varchar(32) DEFAULT NULL,
   `foreign_name` varchar(128) DEFAULT NULL,
   `birthday` date DEFAULT NULL,
-  `genre` tinyint(1) UNSIGNED DEFAULT NULL,
+  `fans_count` int(1) UNSIGNED DEFAULT NULL,
   `song_conut` smallint(1) UNSIGNED DEFAULT NULL,
   `album_conut` smallint(1) UNSIGNED DEFAULT NULL,
   `search_conut` smallint(1) UNSIGNED DEFAULT NULL,
@@ -45,6 +58,7 @@ CREATE TABLE `singer` (
   `wiki` text
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+DROP TABLE IF EXISTS `song`;
 CREATE TABLE `song` (
   `song_id` int(1) UNSIGNED NOT NULL,
   `mid` varchar(32) DEFAULT NULL,

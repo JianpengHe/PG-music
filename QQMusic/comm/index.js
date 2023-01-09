@@ -146,20 +146,35 @@ const request = async (req, useCache = true) => {
     )
   );
   await sleep(
-    last_req_time + Req_Valve - (last_req_time = new Date().getTime())
+    last_req_time +
+      Req_Valve +
+      Math.ceil(Math.random() * 3000) -
+      (last_req_time = new Date().getTime())
   );
-  const res = await new Promise((r) => requestQQmusic(reqBody, r));
-  needReq.forEach((obj, index) => {
-    const data = res["req_" + index];
-    if (data?.code !== 0 && data?.code !== 24001) {
-      console.log(data, req);
-      throw new Error("code is not 0");
+  while (1) {
+    const res = await new Promise((r) => requestQQmusic(reqBody, r));
+    if (
+      !needReq.some((obj, index) => {
+        const data = res["req_" + index];
+        if (data?.code !== 0 && data?.code !== 24001) {
+          /** 请求过于频繁 */
+          if (data?.code === 2001) {
+            console.log("请求过于频繁");
+            return true;
+          }
+          console.log(req, data, JSON.stringify(data));
+          throw new Error("code is not 0");
+        }
+        obj.data = data.data;
+        if (useCache) {
+          obj.save_request_cache(obj);
+        }
+      })
+    ) {
+      break;
     }
-    obj.data = data.data;
-    if (useCache) {
-      obj.save_request_cache(obj);
-    }
-  });
+    await sleep(5000);
+  }
   return isArray ? objs.map(({ data }) => data) : objs[0].data;
 };
 
@@ -251,6 +266,21 @@ const GetPlayLyricInfo = (songID) => ({
   },
 });
 
+const getFansCount = (singerMid) =>
+  new Promise((r) =>
+    https.get(
+      `https://c.y.qq.com/rsc/fcgi-bin/fcg_order_singer_getnum.fcg?_=${new Date().getTime()}&uin=0&format=json&inCharset=utf-8&outCharset=utf-8&notice=0&platform=wk_v17&needNewCode=0&singermid=${singerMid}&utf8=1`,
+      { headers: { referer: "https://y.qq.com/wk_v17" } },
+      async (res) => {
+        const body = [];
+        for await (const chuck of res) {
+          body.push(chuck);
+        }
+        r(JSON.parse(String(Buffer.concat(body))).num);
+      }
+    )
+  );
+
 module.exports = {
   keySort,
   request,
@@ -262,6 +292,7 @@ module.exports = {
   DoSearchForQQMusicDesktop,
   GetCommentCount,
   GetPlayLyricInfo,
+  getFansCount,
 };
 // console.log(keySort({ c: 99, a: { d: 5, c: [3, 2, 1] } }));
 
