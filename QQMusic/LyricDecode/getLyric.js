@@ -26,12 +26,18 @@ const read_request_cache = (ob) =>
 const getLyric = async (song_ids) =>
   await Promise.all(
     (
-      await request(song_ids.map(GetPlayLyricInfo), (ob) => {
-        ob.save_request_cache = save_request_cache;
-        ob.read_request_cache = read_request_cache;
-      })
+      await request(
+        (song_ids[0].song_id
+          ? song_ids.map(({ song_id }) => song_id)
+          : song_ids
+        ).map(GetPlayLyricInfo),
+        (ob) => {
+          ob.save_request_cache = save_request_cache;
+          ob.read_request_cache = read_request_cache;
+        }
+      )
     ).map(
-      ({ lyric, songID }) =>
+      ({ lyric, songID }, i) =>
         new Promise((r) => {
           if (!(lyric instanceof Buffer)) {
             lyric = Buffer.from(lyric || "", "hex");
@@ -40,14 +46,19 @@ const getLyric = async (song_ids) =>
           if (lyric.length) {
             zlib.inflate(LyricDecode(lyric, lyric.length), (err, d) => {
               if (err || !d) {
-                r({ lyric: "err", song_id: songID });
+                r({ lyric: null, song_id: songID });
                 return;
               }
-              r({ lyric: encode(String(d)), song_id: songID });
+              const delSongInfos = song_ids[i].singer
+                ? String(song_ids[i].singer).split("、")
+                : [];
+              song_ids[i].name && delSongInfos.push(song_ids[i].name);
+
+              r({ lyric: encode(String(d), delSongInfos), song_id: songID });
             });
             return;
           }
-          r({ lyric: "no length", song_id: songID });
+          r({ lyric: "", song_id: songID });
         })
     )
   );

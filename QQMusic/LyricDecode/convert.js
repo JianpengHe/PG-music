@@ -93,29 +93,64 @@ const encode = (() => {
         return str;
       })
       .join("");
-  return (str) => {
+
+  /** delSongInfos传false则不【去掉歌词开头歌曲信息】 */
+  return (str, delSongInfos) => {
     const out = [];
     let nowTime = 0;
+
+    if (delSongInfos !== false) {
+      if (!Array.isArray(delSongInfos)) {
+        delSongInfos = [];
+      }
+      /** 歌曲名 */
+      delSongInfos.push((str.match(/\[ti:(.+?)\]/) || [])[1] || "");
+      /** 歌手 */
+      delSongInfos.push((str.match(/\[ar:(.+?)\]/) || [])[1] || "");
+
+      delSongInfos = [
+        ...new Set(delSongInfos.map((a) => a.trim()).filter((a) => a)),
+      ].map(
+        (a) =>
+          new RegExp(
+            `[\\x00-\\xff]+?[（\\(]{0,1}${[...a]
+              .map((a) => ("*.?+$^[](){}|/".includes(a) ? "\\\\" : "") + a)
+              .join("")}[）\\)]{0,1}[\\x00-\\xff]+?`,
+            "i"
+          )
+      );
+      // console.log(delSongInfos);
+    }
+
+    /** 去掉空字符 */
     str
+      .replace(/(\[\d+,\d+\])\(\d+,\d+\)/g, (_, a) => a)
+      .replace(/(\(\d+,\d+\))\(\d+,\d+\)/g, (_, a) => a)
+
       .split("\n")
       .map((line) => line.trim().match(/^\[(\d+),(\d+)\](.*)$/))
       .filter((a) => a)
       .forEach(([, line_start, line_duration, line], line_index) => {
-        /** 去掉歌词开头歌曲信息 */
-        if (line_index < 10) {
-          if (
-            Number(line_duration) < 1000 ||
-            /(词|曲|人|版|制|监)(.*?)(\:|：)/.test(line)
-          ) {
-            nowTime = 0;
-            out.length = 0;
+        let lineStr = " ";
+        if (delSongInfos) {
+          /** 去掉歌词开头歌曲信息 */
+          if (line_index < 10) {
+            if (
+              Number(line_duration) < 1000 ||
+              /(词|曲|人|版|制|监)(.*?)(\:|：)/.test(line) ||
+              delSongInfos.some((reg) => reg.test(` ${line} `))
+            ) {
+              nowTime = 0;
+              out.length = 0;
+              return;
+            }
+          }
+          /** 去掉空行 */
+          if (!String(line).trim()) {
             return;
           }
         }
-        /** 去掉空行 */
-        if (!String(line).trim()) {
-          return;
-        }
+
         let ch_duration_sum = 0;
         if (out.length) {
           out[out.length - 1].end = -nowTime + (nowTime = Number(line_start));
@@ -131,10 +166,24 @@ const encode = (() => {
           });
           nowTime += Number(ch_duration);
           ch_duration_sum += Number(ch_duration);
+          lineStr += ch;
         }
         const start = Math.max(0, ch_duration_sum - Number(line_duration));
         nowTime += start;
         out.push({ start, nowTime, ch: "\n", end: 0 });
+
+        /** 去掉歌词开头歌曲信息2 */
+        lineStr += " ";
+        // console.log(lineStr);
+        if (
+          line_index < 10 &&
+          delSongInfos &&
+          delSongInfos.length &&
+          delSongInfos.some((reg) => reg.test(lineStr))
+        ) {
+          nowTime = 0;
+          out.length = 0;
+        }
       });
     out.splice(-1, 1);
     /** 修复负数 */
