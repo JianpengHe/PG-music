@@ -13,7 +13,8 @@ const { replace, mysql } = require("../comm/mysql_con");
 const { getLyric } = require("../LyricDecode/getLyric");
 
 const singer = {
-  "003Nz2So3XXYek": "陈奕迅",
+  // "003Nz2So3XXYek": "陈奕迅",
+  "0033DUFG3yj0r3": "陈百强",
 };
 // let replace = async () => {};
 const getInfo = async (singer_mid) => {
@@ -89,6 +90,10 @@ const saveSongList = async (songList) => {
         title,
         subtitle,
         singers: JSON.stringify(singer.map(({ id }) => String(id)).sort()),
+        singer: singer
+          .map(({ name }) => String(name))
+          .sort()
+          .join("、"),
         album_id: album.id,
         duration: interval,
         language,
@@ -272,16 +277,13 @@ const commentCount = async () => {
 };
 
 const getLyrics = async () => {
-  const song_ids = flat(
-    await mysql.query(
-      "SELECT song_id FROM `song` WHERE `lyric` IS NULL ORDER BY `song_id` ASC",
-      []
-    ),
-    "song_id"
+  const songList = await mysql.query(
+    "SELECT song_id,singer,name FROM `song` WHERE `lyric` IS NULL ORDER BY `song_id` ASC",
+    []
   );
   let i = 0;
-  for (const req of unFlat(song_ids, 20)) {
-    console.log("getLyrics", song_ids.length - i * 20, i);
+  for (const req of unFlat(songList, 20)) {
+    console.log("getLyrics", songList.length - i * 20, i);
     i++;
     await replace(
       "song",
@@ -294,15 +296,22 @@ const getLyrics = async () => {
 (async () => {
   for (const singer_mid of Object.keys(singer)) {
     const { song_conut, album_conut, search_conut } = await getInfo(singer_mid);
+    console.log(
+      "歌曲数",
+      song_conut,
+      "专辑数",
+      album_conut,
+      "搜索结果数",
+      search_conut
+    );
     const song_ids = new Set([
       ...(await getSingerSongList(singer_mid, song_conut)),
       ...(await getSingerAlbum(singer_mid, album_conut)),
     ]);
     // replace = require("../comm/mysql_con").replace;
     await searchSingerSongList(singer_mid, search_conut, song_ids);
-    console.log(song_conut, album_conut, search_conut, song_ids.size);
   }
-  await commentCount();
+  // await commentCount();
   await getLyrics();
   setTimeout(() => {
     process.exit();
