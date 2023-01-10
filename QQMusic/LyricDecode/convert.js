@@ -104,7 +104,7 @@ const encode = (() => {
         delSongInfos = [];
       }
       /** 歌曲名 */
-      delSongInfos.push((str.match(/\[ti:(.+?)\]/) || [])[1] || "");
+      // delSongInfos.push((str.match(/\[ti:(.+?)\]/) || [])[1] || "");
       /** 歌手 */
       delSongInfos.push((str.match(/\[ar:(.+?)\]/) || [])[1] || "");
 

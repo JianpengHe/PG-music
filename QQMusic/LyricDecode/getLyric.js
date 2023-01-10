@@ -52,7 +52,7 @@ const getLyric = async (song_ids) =>
               const delSongInfos = song_ids[i].singer
                 ? String(song_ids[i].singer).split("、")
                 : [];
-              song_ids[i].name && delSongInfos.push(song_ids[i].name);
+              // song_ids[i].name && delSongInfos.push(song_ids[i].name);
 
               r({ lyric: encode(String(d), delSongInfos), song_id: songID });
             });
