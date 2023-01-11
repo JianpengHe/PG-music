@@ -134,10 +134,9 @@ const encode = (() => {
         let lineStr = " ";
         if (delSongInfos) {
           /** 去掉歌词开头歌曲信息 */
-          if (line_index < 10) {
+          if (line_index < 20) {
             if (
-              Number(line_duration) < 1000 ||
-              /(词|曲|人|版|制|监)(.*?)(\:|：)/.test(line) ||
+              /[词曲人版制监编唱a-z](.*?)(\:|：)/i.test(line) ||
               delSongInfos.some((reg) => reg.test(` ${line} `))
             ) {
               nowTime = 0;
@@ -175,14 +174,16 @@ const encode = (() => {
         /** 去掉歌词开头歌曲信息2 */
         lineStr += " ";
         // console.log(lineStr);
-        if (
-          line_index < 10 &&
-          delSongInfos &&
-          delSongInfos.length &&
-          delSongInfos.some((reg) => reg.test(lineStr))
-        ) {
-          nowTime = 0;
-          out.length = 0;
+        if (line_index < 10) {
+          if (
+            (lineStr.length > 5 && Number(line_duration) < 500) ||
+            (delSongInfos &&
+              delSongInfos.length &&
+              delSongInfos.some((reg) => reg.test(lineStr)))
+          ) {
+            nowTime = 0;
+            out.length = 0;
+          }
         }
       });
     out.splice(-1, 1);

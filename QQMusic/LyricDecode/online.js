@@ -33,13 +33,16 @@ const getLyricOnline = (songID) =>
           if (err) {
             throw err;
           }
+          console.log(String(result));
           r(String(result));
         });
       }
     );
   });
 if (process.argv[1].includes("online")) {
-  getLyricOnline(Number(process.argv[2] || 260677)).then((a) => console.log(a));
+  getLyricOnline(Number(process.argv[2] || 260677)).then((a) =>
+    console.log(String(a).replace(/[\ue000-\uf8ff]/g, ""), a)
+  );
 }
 
 module.exports = { getLyricOnline };

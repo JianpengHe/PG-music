@@ -34,11 +34,11 @@ const go = (d) => {
   const t = encode(d);
   console.log(
     // zlib.deflateSync(Buffer.from(d)).length,
-    Buffer.from(t).length
+    Buffer.from(t).length,
     // zlib.deflateSync(Buffer.from(t)).length,
     // zlib.deflateSync(Buffer.from(t.replace(/[\ue000-\uf8ff]/g, ""))).length
     // t.match(/([^\ue000-\uf8ff]+?)([\ue000-\uf8ff]+?)/g),
-    // t.replace(/[\ue000-\uf8ff]/g, "")
+    t.replace(/[\ue000-\uf8ff]/g, "")
   );
   const out = decode(t);
   out.forEach((a) => console.log(a));
