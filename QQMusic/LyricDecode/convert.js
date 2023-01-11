@@ -10,6 +10,24 @@
  */
 
 const encode = (() => {
+  const banHeadInfoKeyWord = [
+    ..."abcdefghijklmnopqrstuvwxyz词曲人版制监编唱手号",
+    "母带",
+    "出品",
+    "导演",
+    "舞台",
+    "舞团",
+    "吉他",
+    "合音",
+    "公司",
+    "弦乐",
+    "混音",
+    "音乐",
+    "统筹",
+    "鸣谢",
+    "秀导",
+    "特别",
+  ];
   const checkNowTime = (out) => {
     let nowRealTime = 0;
     let useCheck = false;
@@ -107,23 +125,27 @@ const encode = (() => {
       // delSongInfos.push((str.match(/\[ti:(.+?)\]/) || [])[1] || "");
       /** 歌手 */
       delSongInfos.push((str.match(/\[ar:(.+?)\]/) || [])[1] || "");
-
       delSongInfos = [
         ...new Set(delSongInfos.map((a) => a.trim()).filter((a) => a)),
-      ].map(
-        (a) =>
-          new RegExp(
-            `[\\x00-\\xff]+?[（\\(]{0,1}${[...a]
-              .map((a) => ("*.?+$^[](){}|/".includes(a) ? "\\\\" : "") + a)
-              .join("")}[）\\)]{0,1}[\\x00-\\xff]+?`,
-            "i"
-          )
-      );
+      ];
+
       // console.log(delSongInfos);
     }
+    const delSongInfoRegs = (delSongInfos || []).map(
+      (a) =>
+        new RegExp(
+          `[\\x00-\\xff]+?[（\\(]{0,1}${[...a]
+            .map((a) => ("*.?+$^[](){}|/".includes(a) ? "\\\\" : "") + a)
+            .join("")}[）\\)]{0,1}[\\x00-\\xff]+?`,
+          "i"
+        )
+    );
 
-    /** 去掉空字符 */
+    /** 上一行是否存在冒号 */
+    let lastLinehasColon = true;
+
     str
+      /** 去掉空字符 */
       .replace(/(\[\d+,\d+\])\(\d+,\d+\)/g, (_, a) => a)
       .replace(/(\(\d+,\d+\))\(\d+,\d+\)/g, (_, a) => a)
 
@@ -132,22 +154,13 @@ const encode = (() => {
       .filter((a) => a)
       .forEach(([, line_start, line_duration, line], line_index) => {
         let lineStr = " ";
+        /** 去掉歌词开头歌曲信息 */
         if (delSongInfos) {
-          /** 去掉歌词开头歌曲信息 */
-          if (line_index < 20) {
-            if (
-              /[词曲人版制监编唱a-z](.*?)(\:|：)/i.test(line) ||
-              delSongInfos.some((reg) => reg.test(` ${line} `))
-            ) {
-              nowTime = 0;
-              out.length = 0;
-              return;
-            }
-          }
           /** 去掉空行 */
           if (!String(line).trim()) {
             return;
           }
+          // console.log(lastLinehasColon, line_index, line);
         }
 
         let ch_duration_sum = 0;
@@ -165,25 +178,47 @@ const encode = (() => {
           });
           nowTime += Number(ch_duration);
           ch_duration_sum += Number(ch_duration);
-          lineStr += ch;
+          lineStr += ch.trim();
         }
         const start = Math.max(0, ch_duration_sum - Number(line_duration));
         nowTime += start;
         out.push({ start, nowTime, ch: "\n", end: 0 });
 
-        /** 去掉歌词开头歌曲信息2 */
-        lineStr += " ";
-        // console.log(lineStr);
-        if (line_index < 10) {
+        /** 去掉歌词开头歌曲信息 */
+        if (delSongInfos) {
+          lineStr += " ";
+          lineStr = lineStr.replace(/\:/g, "：").toLowerCase();
+          let isDelThisLine = false;
+          let split;
+
+          // console.log(lineStr);
+
           if (
-            (lineStr.length > 5 && Number(line_duration) < 500) ||
-            (delSongInfos &&
-              delSongInfos.length &&
-              delSongInfos.some((reg) => reg.test(lineStr)))
+            line_index < 30 &&
+            /** 上一行必须有冒号 */
+            lastLinehasColon &&
+            /** 只有一个冒号 */
+            (split = lineStr.split("：")).length === 2 &&
+            /** 不能包含歌曲信息 */
+            delSongInfos.every(
+              (info) => !split[0].includes(info.toLowerCase())
+            ) &&
+            /** 有关键字就ban */
+            banHeadInfoKeyWord.some((kw) => split[0].includes(kw))
           ) {
+            isDelThisLine = true;
+          } else if (
+            line_index < 10 &&
+            ((lineStr.length > 5 && Number(line_duration) < 500) ||
+              delSongInfoRegs.some((reg) => reg.test(lineStr)))
+          ) {
+            isDelThisLine = true;
+          }
+          if (isDelThisLine) {
             nowTime = 0;
             out.length = 0;
           }
+          lastLinehasColon = line_index < 1 || lineStr.includes("：");
         }
       });
     out.splice(-1, 1);
