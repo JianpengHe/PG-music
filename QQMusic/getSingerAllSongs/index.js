@@ -322,8 +322,10 @@ const commentCount = async () => {
     ),
     "song_id"
   );
+  let i = 0;
   for (const req of unFlat(song_ids, 25, 10)) {
-    console.log("GetCommentCount");
+    console.log("GetCommentCount", song_ids.length - i * 250, i);
+    i++;
     await replace(
       "song",
       flat(await request(req.map(GetCommentCount), false), "response_list")
@@ -337,20 +339,23 @@ const commentCount = async () => {
   }
 };
 
-const getLyrics = async () => {
+const getLyrics = async (start = 0) => {
   const songList = await mysql.query(
-    "SELECT song_id,singer,name FROM `song` WHERE `lyric` IS NULL ORDER BY `song_id` ASC",
+    "SELECT song_id,singer,name FROM `song` WHERE `lyric` IS NULL  ORDER BY `song_id` ASC LIMIT 0,1000;",
     []
   );
   let i = 0;
-  for (const req of unFlat(songList, 20)) {
-    console.log("getLyrics", songList.length - i * 20, i);
+  for (const req of unFlat(songList, 25)) {
+    console.log("getLyrics", "第", start, "次", songList.length - i * 25);
     i++;
     await replace(
       "song",
       (await getLyric(req)).filter(({ song_id }) => song_id)
     );
     // return;
+  }
+  if (songList.length === 1000) {
+    await getLyrics(start + 1);
   }
 };
 
@@ -370,6 +375,7 @@ const getFansCounts = async () => {
   for (const singer_mid of Object.keys(singer)) {
     const { song_conut, album_conut, search_conut } = await getInfo(singer_mid);
     console.log(
+      singer[singer_mid],
       "歌曲数",
       song_conut,
       "专辑数",

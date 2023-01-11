@@ -151,6 +151,7 @@ const request = async (req, useCache = true) => {
       Math.ceil(Math.random() * 3000) -
       (last_req_time = new Date().getTime())
   );
+  let errTimes = 0;
   while (1) {
     const res = await new Promise((r) => requestQQmusic(reqBody, r));
     if (
@@ -159,7 +160,7 @@ const request = async (req, useCache = true) => {
         if (data?.code !== 0 && data?.code !== 24001) {
           /** 请求过于频繁 */
           if (data?.code === 2001) {
-            console.log("请求过于频繁");
+            console.log("第", ++errTimes, "次", "请求过于频繁");
             return true;
           }
           console.log(req, data, JSON.stringify(data));
@@ -173,7 +174,11 @@ const request = async (req, useCache = true) => {
     ) {
       break;
     }
-    await sleep(5000);
+    if (errTimes > 5) {
+      console.log(reqBody);
+      throw new Error("请求失败太多");
+    }
+    await sleep(5000 * errTimes);
   }
   return isArray ? objs.map(({ data }) => data) : objs[0].data;
 };
