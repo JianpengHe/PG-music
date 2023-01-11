@@ -197,8 +197,8 @@ const encode = (() => {
             line_index < 30 &&
             /** 上一行必须有冒号 */
             lastLinehasColon &&
-            /** 只有一个冒号 */
-            (split = lineStr.split("：")).length === 2 &&
+            /** 至少有一个冒号 */
+            (split = lineStr.split("：")).length >= 2 &&
             /** 不能包含歌曲信息 */
             delSongInfos.every(
               (info) => !split[0].includes(info.toLowerCase())

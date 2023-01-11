@@ -10,6 +10,9 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `统计` ()  NO SQL
 SELECT * FROM (SELECT grp_from_song_id as id,COUNT(*) as num ,sum(comment_count) as total_comment_count FROM `song` GROUP by grp_from_song_id) a INNER JOIN song b on a.id=b.song_id  
 ORDER BY `a`.`total_comment_count` DESC$$
 
+DROP PROCEDURE IF EXISTS `统计应下载的大小`$$
+CREATE DEFINER=`root`@`127.0.0.1` PROCEDURE `统计应下载的大小` ()  SELECT sum(size_96aac)/1024/1024/1024 as `acc大小(GB)`,sum(size_320mp3)/1024/1024/1024 as `mp3大小(GB)`,sum(size_flac)/1024/1024/1024 as `flac大小(GB)` FROM `media`$$
+
 DELIMITER ;
 
 DROP TABLE IF EXISTS `album`;
@@ -29,11 +32,8 @@ DROP TABLE IF EXISTS `media`;
 CREATE TABLE `media` (
   `media_mid` varchar(32) NOT NULL,
   `size_96aac` int(1) UNSIGNED DEFAULT NULL,
-  `size_aac_file` int(1) UNSIGNED DEFAULT NULL,
   `size_320mp3` int(1) UNSIGNED DEFAULT NULL,
-  `size_mp3_file` int(1) UNSIGNED DEFAULT NULL,
-  `size_flac` int(1) UNSIGNED DEFAULT NULL,
-  `size_flac_file` int(1) UNSIGNED DEFAULT NULL
+  `size_flac` int(1) UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 DROP TABLE IF EXISTS `singer`;
