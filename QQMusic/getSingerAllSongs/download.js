@@ -3,10 +3,10 @@ const fs = require("fs");
 const { mysql, replace } = require("../comm/mysql_con");
 const keepAliveAgent = new https.Agent({
   keepAlive: true,
-  maxSockets: 10,
-  maxFreeSockets: 10,
+  maxSockets: 15,
+  maxFreeSockets: 15,
 });
-const Thread = 5;
+const Thread = 6;
 const ThreadRand = 12345;
 const PATH = "D:/songs/album";
 
