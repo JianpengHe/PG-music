@@ -1,0 +1,1062 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="screen-orientation" content="portrait" />
+    <meta name="x5-orientation" content="portrait" />
+    <meta name="renderer" content="webkit" />
+    <meta charset="utf-8" />
+    <title>鹏飞音乐</title>
+    <link rel="stylesheet" href="https://res.wx.qq.com/open/libs/weui/2.1.3/weui.min.css" />
+    <link rel="stylesheet" href="https://tool.hejianpeng.cn/js/weui/200202.css" />
+    <style>
+      #lyric {
+        position: fixed;
+        width: 100%;
+        height: 50px;
+        bottom: 5%;
+        z-index: 999;
+        pointer-events: none;
+        text-align: center;
+        font-size: 18px;
+        line-height: 50px;
+        opacity: 0;
+        transition: opacity 0.5s;
+        left: 0;
+        white-space: nowrap;
+      }
+
+      #lyric span {
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-color: rgba(150, 150, 150, 1);
+        background-image: linear-gradient(#01e5ff, #01e5ff);
+        background-repeat: no-repeat;
+        background-size: 0%;
+        animation-fill-mode: forwards;
+        animation-timing-function: linear;
+        animation-delay: 0s;
+        animation-iteration-count: 1;
+        animation-direction: normal;
+        animation-play-state: running;
+      }
+
+      .stop span {
+        animation-play-state: paused !important;
+      }
+
+      @keyframes lyric {
+        0% {
+          background-size: 0%;
+        }
+
+        100% {
+          background-size: 100%;
+        }
+      }
+
+      .weui-cell__ft {
+        width: 30%;
+      }
+
+      .songs_img {
+        position: relative;
+        margin-right: 10px;
+      }
+
+      .songs_img .music_icon {
+        width: 50px;
+        height: 50px;
+        background-size: 50px 50px;
+        background-repeat: no-repeat;
+      }
+
+      .weui-cell__bd p:nth-child(2) {
+        font-size: 13px;
+        color: #888;
+      }
+
+      #search_layer {
+        position: fixed;
+        height: 100%;
+        width: 100%;
+        z-index: 10;
+      }
+
+      #search_bar {
+        z-index: 11;
+      }
+
+      #search_tips {
+        z-index: 11;
+      }
+
+      #search_main {
+        display: none;
+      }
+
+      .background {
+        position: absolute;
+        width: 100vmax;
+        height: 100vmax;
+        margin: -50vmax;
+        left: 50%;
+        top: 50%;
+      }
+
+      .background_filter {
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+        -webkit-filter: blur(2vmax);
+        filter: blur(2vmax);
+        z-index: -2;
+        transform: scale(1.1);
+      }
+
+      .background_mask {
+        background-color: #000;
+        opacity: 0.5;
+        z-index: -1;
+      }
+
+      #song {
+        color: #fff;
+        text-align: center;
+      }
+
+      h1 {
+        white-space: nowrap;
+        padding: 0 45px;
+        font-size: 3.6vh;
+        font-weight: 500;
+        margin-top: 4.5vh;
+      }
+
+      h3 {
+        white-space: nowrap;
+        padding: 0 45px;
+        font-size: 2vh;
+        font-weight: 100;
+        color: #ccc;
+      }
+
+      #song_img {
+        position: absolute;
+        top: 15vh;
+        height: 30vh;
+        width: 30vh;
+        background-size: 30vh 30vh;
+        background-repeat: no-repeat;
+        margin-left: -15vh;
+        left: 50%;
+        box-shadow: 0 0 2vmin 0 #000;
+        background-color: #ddd;
+      }
+
+      #song_intro p {
+        margin: 4vh 0;
+      }
+
+      #song_intro {
+        position: absolute;
+        top: 45vh;
+        height: 35vh;
+        width: 50vw;
+        margin-left: -25vw;
+        left: 50%;
+        color: #ddd;
+        font-size: 2vh;
+        overflow-x: hidden;
+        mask-image: linear-gradient(
+          to bottom,
+          rgba(255, 255, 255, 0) 0,
+          rgba(255, 255, 255, 0.6) 8%,
+          rgba(255, 255, 255, 1) 15%,
+          rgba(255, 255, 255, 1) 85%,
+          rgba(255, 255, 255, 0.6) 91%,
+          rgba(255, 255, 255, 0) 100%
+        );
+        -webkit-mask-image: linear-gradient(
+          to bottom,
+          rgba(255, 255, 255, 0) 0,
+          rgba(255, 255, 255, 0.6) 8%,
+          rgba(255, 255, 255, 1) 15%,
+          rgba(255, 255, 255, 1) 85%,
+          rgba(255, 255, 255, 0.6) 91%,
+          rgba(255, 255, 255, 0) 100%
+        );
+      }
+
+      .song_btns {
+        position: absolute;
+        bottom: 12vh;
+        width: 30vh;
+        margin-left: -15vh;
+        left: 50%;
+      }
+
+      .song_btns svg {
+        width: 100%;
+        height: 100%;
+        fill: #fff;
+      }
+
+      #song_control path {
+        display: none;
+      }
+
+      #song_control path:nth-child(1) {
+        display: block;
+      }
+
+      .song_btns div {
+        position: absolute;
+        width: 4vh;
+        height: 4vh;
+        opacity: 0.5;
+        bottom: 0;
+        cursor: pointer;
+      }
+
+      .song_btns div:hover {
+        opacity: 1;
+      }
+
+      .song_btns div:nth-child(1) {
+        left: 0;
+      }
+
+      .song_btns div:nth-child(2) {
+        left: 12.5vh;
+        width: 6vh;
+        height: 6vh;
+        bottom: -1vh;
+      }
+
+      .song_btns div:nth-child(3) {
+        right: 0;
+      }
+
+      audio {
+        display: none;
+      }
+
+      .weui-search-bar__label {
+        text-overflow: ellipsis;
+        padding: 0 10px;
+        overflow: hidden;
+        white-space: nowrap;
+      }
+
+      .weui-actionsheet {
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+        left: 50%;
+        top: 50%;
+        bottom: auto;
+        -webkit-transform: translate(-50%, -80%);
+        transform: translate(-50%, -80%);
+        min-width: 274px;
+        width: 60vw;
+        box-sizing: border-box;
+        cursor: pointer;
+      }
+
+      #searchResult {
+        height: 224px;
+        margin-bottom: -224px;
+        margin-top: 0;
+        z-index: 99;
+        box-shadow: 0px 4px 2px rgba(0, 0, 0, 0.2);
+        display: none;
+      }
+
+      .searchbar-result p {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        font-size: 14px;
+      }
+
+      @keyframes showMain {
+        0% {
+          transform: rotate(0deg);
+        }
+
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      #showMain {
+        opacity: 0.8;
+        top: 6vmin;
+        right: 6vmin;
+        width: 40px;
+        height: 40px;
+        position: fixed;
+        background-image: url("");
+        background-size: 100%;
+        border-radius: 50%;
+        z-index: 99;
+        box-shadow: 0 0 10px 1px #000;
+        animation-iteration-count: infinite;
+        animation-name: showMain;
+        animation-duration: 20s;
+        animation-timing-function: linear;
+        animation-play-state: paused;
+        display: none;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="showMain"></div>
+    <div id="lyric"></div>
+    <div id="mainLayer"></div>
+    <div class="weui-toast">
+      <i class="weui-loading weui-icon_toast"></i>
+      <p class="weui-toast__content">正在加载</p>
+    </div>
+    <div id="weui-main">
+      <!--第一页-->
+      <div class="weui-main">
+        <div class="weui-slide">
+          <div class="weui-title">鹏飞音乐</div>
+          <div class="weui-search-bar weui-search-bar_focusing" id="searchBar">
+            <form class="weui-search-bar__form">
+              <div class="weui-search-bar__box">
+                <i class="weui-icon-search"></i>
+                <input
+                  type="search"
+                  class="weui-search-bar__input"
+                  autocomplete="off"
+                  id="searchInput"
+                  placeholder="搜索"
+                  required=""
+                />
+                <a href="javascript:" class="weui-icon-clear" id="searchClear"></a>
+              </div>
+            </form>
+          </div>
+          <div class="weui-cells searchbar-result" id="searchResult"></div>
+          <div class="weui-cells" id="searchList"></div>
+        </div>
+      </div>
+      <!--第二页-->
+      <div class="weui-main" style="overflow: hidden; z-index: 100">
+        <div class="background background_mask"></div>
+        <img class="background background_filter" id="song_bg" alt="" />
+        <div class="weui-slide">
+          <svg onClick="history.back()" class="weui-back" viewBox="0 0 1024 1024">
+            <path
+              d="M648 307.2H217.6l128-128c12.8-12.8 12.8-32 0-44.8-12.8-12.8-32-12.8-44.8 0L118.4 315.2c-6.4 6.4-9.6 14.4-9.6 22.4s3.2 16 9.6 22.4l180.8 180.8c12.8 12.8 32 12.8 44.8 0 12.8-12.8 12.8-32 0-44.8L219.2 371.2H648c120 0 216 96 216 216s-96 216-216 216H320c-17.6 0-32 14.4-32 32s14.4 32 32 32h328c155.2 0 280-124.8 280-280s-124.8-280-280-280z"
+              fill="#fff"
+            ></path>
+          </svg>
+          <div id="song">
+            <audio src="data:audio/mp3;base64," controls hidden="true"></audio>
+            <h1 id="song_title"></h1>
+            <h3 id="song_author"></h3>
+            <div id="song_img"></div>
+            <div id="song_intro"></div>
+            <div class="song_btns">
+              <div title="加入播放列表" id="song_add">
+                <svg viewBox="0 0 1024 1024">
+                  <path
+                    d="M215.581911 862.307166l323.365187 0c0-18.593498 2.371344-36.648055 6.790669-53.894198L215.581911 808.412969 215.581911 862.307166zM808.418089 646.730375l-53.894198 0c18.593498 0 36.648055 2.371344 53.894198 6.790669L808.418089 646.730375zM808.418089 1023.98976 808.418089 916.201364 916.206484 916.201364 916.206484 808.412969 808.418089 808.412969 808.418089 700.624573 700.629693 700.624573 700.629693 808.412969 592.841297 808.412969 592.841297 916.201364 700.629693 916.201364 700.629693 1023.98976ZM754.523891 646.730375 215.581911 646.730375l0 53.894198 396.337932 0C649.915253 667.102382 699.875174 646.730375 754.523891 646.730375zM215.581911 485.047782l592.836177 0 0 53.894198-592.836177 0 0-53.894198ZM916.206484 11.317782C916.206484 5.066054 911.248219 0 905.10428 0L118.89572 0C112.751781 0 107.793516 5.012161 107.793516 11.317782l0 1001.354197C107.793516 1018.923706 112.751781 1023.98976 118.89572 1023.98976l493.024123 0c-17.46172-15.413741-32.390413-33.62998-44.139348-53.894198L161.687714 970.095562 161.687714 53.894198l700.624573 0 0 621.669572c20.264218 11.748936 38.480457 26.677628 53.894198 44.139348L916.206484 11.317782zM215.581911 323.365187l592.836177 0 0 53.894198-592.836177 0 0-53.894198ZM215.581911 161.682594l592.836177 0 0 53.894198-592.836177 0 0-53.894198Z"
+                  ></path>
+                </svg>
+              </div>
+              <div title="播放" id="song_control">
+                <svg viewBox="0 0 1024 1024">
+                  <path d="M891.161 512l-749.992 450v-900l749.992 450z"></path>
+                  <path d="M209.417 62h150.008v900h-150.008v-900z"></path>
+                  <path d="M659.417 62h149.985v900h-149.985v-900z"></path>
+                  <path
+                    d="M853.333333 512a341.333333 341.333333 0 0 1-474.794666 314.24l66.986666-66.986667a256 256 0 0 0 313.770667-313.770666l66.986667-66.944c17.408 40.96 27.050667 86.101333 27.050666 133.461333z m-341.333333-341.333333c47.232 0 92.245333 9.6 133.162667 26.965333l-66.986667 66.986667a256 256 0 0 0-313.514667 313.514666l-67.029333 67.029334A341.333333 341.333333 0 0 1 512 170.666667z"
+                  >
+                    <animateTransform
+                      attributeName="transform"
+                      attributeType="XML"
+                      type="rotate"
+                      dur="1s"
+                      from="0 512 512"
+                      to="360 512 512"
+                      repeatCount="indefinite"
+                    ></animateTransform>
+                  </path>
+                </svg>
+              </div>
+              <div title="下载" id="song_download">
+                <svg viewBox="0 0 1024 1024">
+                  <path
+                    d="M0 512.7168c0 101.632 76.0832 185.9584 176.0256 202.24l35.2256 2.816 196.1984 0 0-50.8416L213.6576 666.9312 190.3104 665.088c-67.4816-10.752-142.0288-90.7776-142.0288-156.2112 0-51.0976 43.5712-133.0176 127.744-162.0992L159.0784 302.5408C155.136 294.0416 153.1392 284.9792 153.1392 275.5584c0-36.7616 37.1712-91.392 95.488-91.392 20.0192 0 43.4688 9.984 56.8832 24.1664l55.04 38.2464 46.7968-62.4128c52.992-79.0016 142.3872-133.3248 243.2-133.3248 142.1824 0 282.5216 135.5264 284.7744 271.0016l0 48.0256 49.5104 13.2608c55.808 18.7904 93.2352 69.3248 93.2352 125.7472 0 65.3824-66.9696 147.3024-134.4512 158.0544l-30.976 0-192.4096 0 0 50.8416 194.8672 0 35.2256-2.816C1050.3168 698.6752 1126.4 614.3488 1126.4 512.7168c0-89.2928-58.7776-165.3248-140.8512-193.4336C982.5792 142.4384 833.9968 0 651.2128 0c-131.84 0-245.8624 74.0864-300.3392 181.76C325.12 154.112 287.8464 136.704 246.3744 136.704c-77.7728 0-140.8 61.2352-140.8 136.704 0 19.712 4.3008 38.4512 11.9808 55.3472C47.9232 362.2912 0 432.0768 0 512.7168zM537.7024 307.2 537.7024 960 307.2 819.2 307.2 870.4 563.2 1024 819.2 870.4 819.2 819.2 588.8 960 588.8 307.2Z"
+                  ></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="dialog" class="weui-mask" style="display: none">
+        <div class="weui-half-screen-dialog">
+          <div class="weui-half-screen-dialog__hd">
+            <div class="weui-half-screen-dialog__hd__side">
+              <button class="weui-icon-btn weui-icon-btn_close">关闭</button>
+            </div>
+            <div class="weui-half-screen-dialog__hd__main">
+              <strong class="weui-half-screen-dialog__title"></strong>
+              <span class="weui-half-screen-dialog__subtitle" style="color: #f00"
+                >仅供网络测试，请勿用于商业用途并在24小时内删除</span
+              >
+            </div>
+            <a href="javascript:;" class="weui-btn weui-btn_mini weui-btn_primary">下载</a>
+          </div>
+          <div class="weui-half-screen-dialog__bd">
+            <div id="sone_quality" class="weui-cells weui-cells_radio"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+  <script src="https://tool.hejianpeng.cn/js/pg_tool/200202.js"></script>
+  <script src="main.js"></script>
+  <script>
+    if (location.host.indexOf("nfuca.com") < 0) {
+      WeLogin = false;
+    }
+  </script>
+  <script src="https://tool.hejianpeng.cn/js/weui/200202.js"></script>
+  <script src="https://res.wx.qq.com/open/libs/weuijs/1.2.1/weui.min.js"></script>
+  <script type="text/javascript">
+    "use strict";
+
+    (function (U) {
+      var searchList = $("searchList"),
+        searchInput = $("searchInput"),
+        searchResultStyle = $("searchResult").style,
+        //info = {},
+        audio = $("$audio")[0],
+        wd = $G.U.wd,
+        page = 1,
+        mid = "",
+        songid = 0,
+        fid = "",
+        singer = "",
+        songName = "",
+        album = "",
+        song_img = "",
+        introduce = "",
+        downloadInfo = {},
+        songLyric = "",
+        a = {
+          size_96aac: ["流畅", "ACC", "C4", "m4a"],
+          size_320mp3: ["高品", "MP3", "M8", "mp3"],
+          size_flac: ["无损", "FLAC", "F0", "flac"],
+        },
+        search = function () {
+          searchInput.blur();
+          wd = searchInput.value;
+          if (!wd) {
+            return false;
+          }
+          document.title = "搜索" + wd + Weui.title;
+          history.replaceState(null, null, $G.U.URL + "?wd=" + encodeURIComponent(wd));
+          page = 1;
+          searchList.innerHTML = "";
+          _P.S({
+            F: function () {
+              $A({
+                U: "https://tool.hejianpeng.cn/u.y.qq.com/cgi-bin/musicu.fcg",
+                send: JSON.stringify({
+                  comm: {
+                    format: "json",
+                    inCharset: "utf-8",
+                    outCharset: "utf-8",
+                    notice: 0,
+                    platform: "yqq.json",
+                    needNewCode: 1,
+                    uin: "1",
+                  },
+                  req_0: {
+                    module: "music.search.SearchCgiService",
+                    method: "DoSearchForQQMusicDesktop",
+                    param: {
+                      num_per_page: 10,
+                      page_num: page++,
+                      query: wd,
+                      search_type: 0,
+                    },
+                  },
+                }),
+                S: function (d) {
+                  d = $U.D({
+                    P: searchList,
+                    innerHTML: (((d.req_0?.data?.body || {}).song || {}).list || [])
+                      .map(function (a) {
+                        //info[a.mid] = a;
+                        return (
+                          '<div data-mid="' +
+                          a.mid +
+                          '" data-d="' +
+                          (a.interval | 0) +
+                          '" class="weui-cell weui-cell_active weui-cell_access"><div class="weui-cell__hd"><img src="//y.gtimg.cn/music/photo_new/T002R300x300M000' +
+                          (a.album || {}).mid +
+                          '_1.jpg?max_age=2592000"></div><div class="weui-cell__bd"><p>' +
+                          a.name +
+                          "</p><p>" +
+                          ((a.album || {}).name || "【未知专辑】") +
+                          '</p></div><div class="weui-cell__ft">' +
+                          (a.singer || [])
+                            .map(function (b) {
+                              return b.name;
+                            })
+                            .join("、") +
+                          "</div></div>"
+                        );
+                      })
+                      .join(""),
+                  });
+                },
+              });
+            },
+          });
+          return false;
+        },
+        smartboxSearch = function () {
+          setTimeout(function () {
+            if (!searchInput.value) {
+              // searchResultStyle.display = "none";
+              return;
+            }
+            // searchResultStyle.display = "block";
+            $J({
+              U:
+                "https://c.y.qq.com/splcloud/fcgi-bin/smartbox_new.fcg?is_xml=0&key=" +
+                searchInput.value +
+                "&g_tk_new_20200303=15037823&g_tk=15037823&loginUin=0&hostUin=0&format=json&inCharset=utf8&outCharset=utf-8&notice=0&platform=yqq.json&needNewCode=0",
+              C: "jsonpCallback",
+              S: function (d) {
+                d = (((d || {}).data || {}).song || {}).itemlist || [];
+                if (d.length === 0) {
+                  //  searchResultStyle.display = "none";
+                  return;
+                }
+                $("searchResult").innerHTML = d
+                  .map(function (a) {
+                    return (
+                      '<div style="height: 24px;" data-name="' +
+                      encodeURIComponent((a.name || "") + " " + (a.singer || "")) +
+                      '" class="weui-cell weui-cell_active weui-cell_access"><div class="weui-cell__bd weui-cell_primary"><p>' +
+                      ((a.name || "") + " " + (a.singer || "")) +
+                      "</p></div></div>"
+                    );
+                  })
+                  .join("");
+                searchResultStyle.height = 57 * d.length + "px";
+                searchResultStyle.marginBottom = -57 * d.length + "px";
+              },
+            });
+          }, 20);
+        },
+        smartbox = $V({
+          O: $("searchInput"),
+          E: "input",
+          F: smartboxSearch,
+        }),
+        getSong = function (fileName, m, cb) {
+          if (fileName in cache) {
+            cb(cache[fileName]);
+            return;
+          }
+          var callback = function (purl) {
+            if (!purl) {
+              _M("暂时无法获取该歌曲，试试其他音质？");
+              cb("");
+              return;
+            }
+            cache[fileName] = "https://ws.stream.qqmusic.qq.com/" + purl;
+            cb(cache[fileName]);
+          };
+          $J({
+            U:
+              "https://u.y.qq.com/cgi-bin/musicu.fcg?format=jsonp&inCharset=utf8&outCharset=utf-8&notice=0&platform=yqq&needNewCode=0&data=" +
+              JSON.stringify({
+                getVkey: {
+                  module: "vkey.GetVkeyServer",
+                  method: "CgiGetVkey",
+                  param: {
+                    guid: "1",
+                    songmid: [m],
+                    filename: [fileName],
+                    songtype: [1],
+                    uin: "1",
+                    loginflag: 1,
+                    platform: "20",
+                  },
+                },
+              }) +
+              "&u=",
+            S: function (q) {
+              var purl = (((((q || {}).getVkey || {}).data || {}).midurlinfo || [])[0] || {}).purl;
+              if (purl) {
+                callback(purl);
+                return;
+              }
+              $A({
+                U: U + "getPlayUrl?songmid=" + m + "&filename=" + fileName + "&_=" + Math.random(),
+                M: "GET",
+                S: function (d) {
+                  callback(((d || [])[0] || {}).purl);
+                  //console.log(d)
+                },
+              });
+              // console.log(purl);
+            },
+          });
+        },
+        songList = [],
+        songListPen = 0,
+        cache = {},
+        showMain = function () {
+          $(".weui-half-screen-dialog__title")[0].innerHTML = "下载【" + songName + "】";
+          $("song_title").innerHTML = songName;
+          $("song_author").innerHTML = singer + (album ? "《" + album + "》" : "【未知专辑】");
+          $("song_intro").innerHTML = introduce;
+          //$("song_intro").style.cssText = introduce ? "text-indent:2em;text-align:left" : "text-align: center";
+          $("sone_quality").innerHTML = Object.keys(a)
+            .map(function (b, i) {
+              return (
+                "<label" +
+                (downloadInfo[b] ? "" : ' style="display:none"') +
+                ' class="weui-cell weui-check__label"><div class="weui-cell__bd"><p>' +
+                a[b][0] +
+                "音质（约" +
+                ((downloadInfo[b] / 1024 / 10.24) | 0) / 100 +
+                'M）</p></div><div class="weui-cell__ft"><input type="radio" class="weui-check" name="sone_quality" value="' +
+                b +
+                '"><span class="weui-icon-checked"></span></div></label>'
+              );
+            })
+            .join("");
+        },
+        lyric = [],
+        readStartNumber = function (str) {
+          return Array.from(str)
+            .reverse()
+            .reduce(function (n, ch) {
+              return n * 6400 + (ch.charCodeAt(0) - 0xe000);
+            }, 0);
+        },
+        lyricDecode = function () {
+          lyric.length = 0;
+          lyricPen = 0;
+          lyricLine = -1;
+          (function (str) {
+            var line = [0];
+            (function (enc) {
+              var start_pos;
+              var nowTime = 0;
+              return Array.from(enc.matchAll(/([^\ue000-\uf8ff]+)([\ue000-\uf8ff]+)/g)).map(function (res) {
+                if (start_pos === undefined) {
+                  start_pos = readStartNumber(enc.substring(0, res.index));
+                }
+                var obj = {
+                  start: start_pos,
+                  nowTime: (nowTime += start_pos),
+                  ch: res[1],
+                  end: res[2][0].charCodeAt(0) - 0xe000,
+                };
+                if (obj.end < 6000) {
+                  start_pos = readStartNumber(res[2].substring(1));
+                } else {
+                  obj.end = (obj.end % 6000) * 6400 + res[2][1].charCodeAt(0) - 0xe000;
+                  start_pos = readStartNumber(res[2].substring(2));
+                }
+                nowTime += obj.end;
+                obj.d = obj.nowTime;
+                obj.c = obj.ch;
+                obj.t = obj.end;
+                obj.i = 0;
+                obj.l = 0;
+                if (obj.c === "\n") {
+                  line.push(lyric.length);
+                  obj.t /= 2;
+                  lyric.push({ d: obj.d, c: "\n", t: obj.t, i: 0, l: 0 });
+                  obj.d += obj.t;
+                }
+                lyric.push(obj);
+                // return obj;
+              });
+            })(str);
+            line.unshift(lyric.length);
+            var Breaks = [],
+              checkBreak = function (index) {
+                var c = lyric[index].c;
+                if (c[c.length - 1] === " ") {
+                  lyric[index].c = c.substr(0, c.length - 1);
+                  Breaks.push(index + 1);
+                  return true;
+                }
+              };
+            line.reduce(function (b, a, i) {
+              b = line[i - 1] - a - 2;
+              if (b >= 10) {
+                b /= 2;
+                b |= 0;
+                //0123456789X 11
+                for (var j = 0; j <= b - 4; j++) {
+                  if (checkBreak(a + b + j) || checkBreak(a + b - j)) {
+                    break;
+                  }
+                  //console.log(j,i,lyric[a+b-j].c);
+                  //console.log(j,i,lyric[a+b+j].c);
+                }
+              }
+              //console.log(line[i - 1] - a - 2, a, i)
+            });
+            Breaks.forEach(function (a) {
+              lyric.splice(
+                a,
+                0,
+                { c: "\n", t: 0, d: lyric[a].d, l: 0, i: 0 },
+                { c: "\n", t: 0, d: lyric[a].d, l: 0, i: 0 }
+              );
+            });
+            var i = 0;
+            var l = 0;
+            lyric.forEach(function (a, j) {
+              lyric[j].i = i++;
+              lyric[j].l = l;
+              if (a.c === "\n") {
+                if (i === 1) {
+                  lyric[j].i = 0;
+                  lyric[j].l = ++l;
+                  return;
+                }
+                i = 0;
+              }
+            });
+            //console.log(line);
+          })(songLyric);
+
+          lyricShow();
+          //console.log(lyric);
+          /*console.log(songLyric.split("").map(a => {
+					if (a.charCodeAt() < 57344) {
+						return a
+					}
+					return a.charCodeAt() - 57344
+				}).join(","))*/
+        },
+        lyricDom = $("lyric"),
+        lyricPen = 0,
+        lyricLine = -1,
+        lyricTimerout,
+        lyricShow = function (notCheck) {
+          if (audio.paused || lyric.length === 0) {
+            return;
+          }
+          var time = (audio.currentTime * 1000) | 0;
+          if (
+            !notCheck &&
+            !lyric.some(function (a, i) {
+              lyricPen = i;
+              if (a.d >= time) {
+                return true;
+              }
+
+              return false;
+            })
+          ) {
+            return;
+          }
+          if (lyricPen < 0) {
+            return;
+          }
+          var text = lyric[lyricPen],
+            differ = text.d - time;
+          //console.log(differ, text);
+          if (differ < 0) {
+            differ = 0;
+          }
+          if (differ > 30) {
+            if (lyricTimerout !== undefined) {
+              clearTimeout(lyricTimerout);
+            }
+            lyricTimerout = setTimeout(function () {
+              lyricShow(lyricPen);
+            }, differ - 20);
+            return;
+          }
+          if (lyricLine !== text.l) {
+            lyricLine = text.l;
+            lyricDom.innerHTML = lyric
+              .map(function (a) {
+                return a.l === lyricLine ? "<span name='lyric'>" + a.c + "</span>" : "";
+              })
+              .join("");
+          }
+          $("@lyric")[text.i].style.cssText = "animation-duration:" + text.t + "ms;animation-name:lyric";
+          if (lyricPen > 0 && lyric[lyricPen - 1].i + 1 === text.i) {
+            $("@lyric")[lyric[lyricPen - 1].i].style.cssText = "animation-duration:0ms;animation-name:lyric";
+          }
+
+          //setTimeout(function () { $("@lyric")[lyricPen].style.cssText = "animation-duration:0ms;animation-name:lyric"; }, lyric[lyricPen].t + 10);
+          lyricPen++;
+          if (text.t < 30) {
+            lyricShow(true);
+            return;
+          }
+          if (lyricTimerout !== undefined) {
+            clearTimeout(lyricTimerout);
+          }
+          lyricTimerout = setTimeout(lyricShow, text.t - 30);
+        },
+        lyricTimerInterval = setInterval(lyricShow, 3000);
+      if (wd) {
+        searchInput.value = wd;
+        smartboxSearch();
+        search();
+      }
+      $("$form")[0].onsubmit = search;
+      $T.B({
+        D: searchList,
+        N: "mid",
+        S: function (d, e) {
+          var interval = e.dataset.d | 0;
+          //console.log(interval);
+          _P.F();
+          song_img = e.getElementsByTagName("img")[0].src;
+          $("showMain").style.backgroundImage = "url('" + song_img + "')";
+          $("song_img").style.backgroundImage = "url('" + song_img + "')";
+          $("song_bg").src = song_img;
+          if (mid !== d && !audio.paused) {
+            setTimeout(function () {
+              $("lyric").innerHTML = "";
+            }, 800);
+            audio.pause();
+          }
+          $J({
+            U:
+              "https://u.y.qq.com/cgi-bin/musicu.fcg?format=jsonp&inCharset=utf8&outCharset=utf-8&notice=0&platform=yqq&needNewCode=0&data=" +
+              JSON.stringify({
+                songinfo: {
+                  method: "get_song_detail_yqq",
+                  param: {
+                    song_type: 0,
+                    song_mid: d,
+                    song_id: 0,
+                  },
+                  module: "music.pf_song_detail_svr",
+                },
+              }) +
+              "&u=",
+            S: function (q) {
+              q = q.songinfo.data;
+
+              var track_info = q.track_info || {};
+              fid = track_info.file.media_mid || "";
+              songid = track_info.id || 0;
+              songName = track_info.name || "";
+              album = track_info.album.name || "";
+              singer = (track_info.singer || [])
+                .map(function (b) {
+                  return b.name || "";
+                })
+                .join("、");
+
+              downloadInfo = track_info.file || {};
+              if (mid !== d) {
+                audio.src = "data:audio/mp3;base64,";
+                audio.currentTime = 0;
+                introduce = ((((q.info || {}).intro || {}).content || [])[0] || {}).value || "";
+                introduce = introduce
+                  ? "<p style='text-align:left;text-indent:2em;'>" + introduce + "</p>"
+                  : "<p style='text-align: center'>【暂无歌曲介绍】</p>";
+
+                lyric = [];
+                mid = d;
+                n[3].style.display = "block";
+                n[0].style.display = "none";
+                getSong(a.size_96aac[2] + "00" + fid + "." + a.size_96aac[3], d, function (src) {
+                  $("showMain").style.display = src ? "block" : "none";
+                  audio.src = src || "data:audio/mp3;base64,";
+                  audio.currentTime = 0;
+                  n[3].style.display = "none";
+                  n[0].style.display = "block";
+                });
+                $A({
+                  U: U + "lyric/" + songid + ".lyric",
+                  M: "GET",
+                  J: false,
+                  S: function (d) {
+                    songLyric = String(d);
+                    introduce =
+                      (introduce !== "<p style='text-align: center'>【暂无歌曲介绍】</p>"
+                        ? "<p style='text-indent:2em;text-align:left'>" + introduce + "</p>"
+                        : "") +
+                      "<p style='text-align: center'>" +
+                      songLyric.replace(/[\ue000-\uf8ff]/g, "").replace(/\n/g, "<br>") +
+                      "</p>";
+                    $("song_intro").innerHTML = introduce;
+                    songLyric = singer + " - " + songName + "\ue000\n\ue000" + songLyric;
+                    lyricDecode();
+                  },
+                });
+              }
+              showMain();
+            },
+          });
+        },
+      });
+      $T.B({
+        D: $("searchResult"),
+        S: function (d) {
+          if (!d) {
+            return;
+          }
+          searchInput.value = decodeURIComponent(d);
+          search();
+        },
+      });
+      var o = $("song_control").F(),
+        n = o.$("$path");
+      $V({
+        F: function () {
+          if (audio.paused) {
+            audio.play();
+          } else {
+            audio.pause();
+          }
+        },
+        E: "click",
+        O: o,
+        I: 500,
+      });
+      $("showMain").onclick = function () {
+        _P.F();
+      };
+      audio.onpause = function () {
+        $("lyric").style.opacity = 0;
+        $("lyric").classList = "stop";
+        $("showMain").style.animationPlayState = "paused";
+        n[0].style.display = "block";
+        n[1].style.display = "none";
+        n[2].style.display = "none";
+      };
+      audio.onplay = function () {
+        $("lyric").style.opacity = 1;
+        $("lyric").classList = "";
+        lyricShow();
+        $("showMain").style.animationPlayState = "running";
+        n[0].style.display = "none";
+        n[1].style.display = "block";
+        n[2].style.display = "block";
+      };
+      audio.onended = function () {
+        if (songList.length) {
+          songListPen++;
+          songListPen %= songList.length;
+          audio.src = songList[songListPen].src;
+          mid = songList[songListPen].mid;
+          fid = songList[songListPen].fid;
+          singer = songList[songListPen].singer;
+          songName = songList[songListPen].songName;
+          album = songList[songListPen].album;
+          song_img = songList[songListPen].song_img;
+          introduce = songList[songListPen].introduce;
+          downloadInfo = songList[songListPen].downloadInfo;
+          songLyric = songList[songListPen].songLyric;
+          $("showMain").style.backgroundImage = "url('" + song_img + "')";
+          $("song_img").style.backgroundImage = "url('" + song_img + "')";
+          $("song_bg").src = song_img;
+          showMain();
+          $("song_intro").innerHTML = introduce;
+          //(introduce ? ("<p style='text-indent:2em;text-align:left'>" + introduce + "</p>") : "") + "<p style='text-align: center'>" + songLyric.replace(/[\ue000-\uffff]/g, "").replace(/\n/g, "<br>") + "</p>";
+          lyricDecode();
+        }
+        audio.currentTime = 0;
+        setTimeout(function () {
+          audio.play();
+        }, 20);
+      };
+      $("searchClear").onclick = function () {
+        searchInput.value = "";
+      };
+      searchInput.onfocus = function () {
+        $V.F(smartbox);
+      };
+      searchInput.onpause = function () {
+        $V.F(smartbox);
+      };
+      searchInput.onblur = function () {
+        // setTimeout(function () {
+        searchResultStyle.display = "none";
+        // }, 150);
+      };
+      searchInput.onfocus = function () {
+        // setTimeout(function () {
+        searchResultStyle.display = "block";
+        // }, 150);
+      };
+      var dialog = _D({
+        D: $("dialog"),
+        S: function () {
+          var d =
+            Object.values(a)[
+              _F.R({
+                D: $("@sone_quality"),
+                N: "下载音质",
+              })
+            ];
+          dialog.show();
+          //_M("测试中");
+          //return;
+          getSong(d[2] + "00" + fid + "." + d[3], mid, function (src) {
+            if (!src) {
+              return;
+            }
+            $U.D({
+              T: "a",
+              href: src,
+              target: "new",
+            }).D.click();
+          });
+        },
+      });
+      $("song_download").onclick = dialog.show;
+      $("song_add").onclick = function () {
+        if (audio.src[0] === "d") {
+          _M("添加失败");
+          return;
+        }
+        if (
+          songList.some(function (a) {
+            return a.mid === mid;
+          })
+        ) {
+          _M("早就加进去了", true);
+          return;
+        }
+        songList.push({
+          src: audio.src,
+          mid: mid,
+          fid: fid,
+          singer: singer,
+          songName: songName,
+          album: album,
+          song_img: song_img,
+          introduce: introduce,
+          downloadInfo: downloadInfo,
+          songLyric: songLyric,
+        });
+        _M("添加成功", true);
+        return;
+      };
+    })("api/");
+  </script>
+</html>

@@ -1,0 +1,1 @@
+﻿"use strict";pengge.Default.A.H={openid:$G.C.openid||""};pengge.Default.A.T=5000;var WeLogin=true,WeLoad=true,Weui={title:" - 鹏飞音乐",oauth:{strict:false,cookie:"openid",url:"//"+location.host.replace(/web\./,"api.")},footer:{url:"https://www.hejianpeng.cn",target:"new",value:"鹏飞音乐",text:"Copyright © "+(new Date()).getFullYear()+" PengFei Music"},background_logo:"bg.png"};
