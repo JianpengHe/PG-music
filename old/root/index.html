@@ -265,8 +265,8 @@
       }
 
       #searchResult {
-        height: 224px;
-        margin-bottom: -224px;
+        height: 0;
+        margin-bottom: 0;
         margin-top: 0;
         z-index: 99;
         box-shadow: 0px 4px 2px rgba(0, 0, 0, 0.2);
@@ -435,12 +435,12 @@
     "use strict";
 
     (function (U) {
-      var searchList = $("searchList"),
+      var url = new URL(location.href),
+        searchList = $("searchList"),
         searchInput = $("searchInput"),
         searchResultStyle = $("searchResult").style,
-        //info = {},
         audio = $("$audio")[0],
-        wd = $G.U.wd,
+        wd = url.searchParams.get("wd"),
         page = 1,
         mid = "",
         songid = 0,
@@ -464,7 +464,8 @@
             return false;
           }
           document.title = "搜索" + wd + Weui.title;
-          history.replaceState(null, null, $G.U.URL + "?wd=" + encodeURIComponent(wd));
+          url.searchParams.set("wd", wd);
+          history.replaceState(null, null, String(url));
           page = 1;
           searchList.innerHTML = "";
           _P.S({
@@ -607,11 +608,10 @@
                 return;
               }
               $A({
-                U: U + "getPlayUrl?songmid=" + m + "&filename=" + fileName + "&_=" + Math.random(),
+                U: U + "play/" + fileName + ".vkey?songmid=" + m,
                 M: "GET",
                 S: function (d) {
-                  callback(((d || [])[0] || {}).purl);
-                  //console.log(d)
+                  callback((d || {}).purl);
                 },
               });
               // console.log(purl);
@@ -626,7 +626,7 @@
           $("song_title").innerHTML = songName;
           $("song_author").innerHTML = singer + (album ? "《" + album + "》" : "【未知专辑】");
           $("song_intro").innerHTML = introduce;
-          //$("song_intro").style.cssText = introduce ? "text-indent:2em;text-align:left" : "text-align: center";
+
           $("sone_quality").innerHTML = Object.keys(a)
             .map(function (b, i) {
               return (
@@ -660,7 +660,7 @@
             (function (enc) {
               var start_pos;
               var nowTime = 0;
-              return Array.from(enc.matchAll(/([^\ue000-\uf8ff]+)([\ue000-\uf8ff]+)/g)).map(function (res) {
+              Array.from(enc.matchAll(/([^\ue000-\uf8ff]+)([\ue000-\uf8ff]+)/g)).forEach(function (res) {
                 if (start_pos === undefined) {
                   start_pos = readStartNumber(enc.substring(0, res.index));
                 }
@@ -677,80 +677,96 @@
                   start_pos = readStartNumber(res[2].substring(2));
                 }
                 nowTime += obj.end;
-                obj.d = obj.nowTime;
-                obj.c = obj.ch;
-                obj.t = obj.end;
-                obj.i = 0;
-                obj.l = 0;
-                if (obj.c === "\n") {
+                var out = {
+                  d: obj.nowTime,
+                  c: obj.ch,
+                  t: obj.end,
+                };
+
+                if (out.c === "\n") {
                   line.push(lyric.length);
-                  obj.t /= 2;
-                  lyric.push({ d: obj.d, c: "\n", t: obj.t, i: 0, l: 0 });
-                  obj.d += obj.t;
+                  out.t /= 2;
+                  lyric.push({ d: out.d, c: "\n", t: out.t, i: 0, l: 0 });
+                  out.d += out.t;
                 }
-                lyric.push(obj);
-                // return obj;
+                lyric.push(out);
               });
-            })(str);
-            line.unshift(lyric.length);
-            var Breaks = [],
-              checkBreak = function (index) {
-                var c = lyric[index].c;
-                if (c[c.length - 1] === " ") {
-                  lyric[index].c = c.substr(0, c.length - 1);
-                  Breaks.push(index + 1);
-                  return true;
-                }
-              };
-            line.reduce(function (b, a, i) {
-              b = line[i - 1] - a - 2;
-              if (b >= 10) {
-                b /= 2;
-                b |= 0;
-                //0123456789X 11
-                for (var j = 0; j <= b - 4; j++) {
-                  if (checkBreak(a + b + j) || checkBreak(a + b - j)) {
-                    break;
+              line.push(lyric.length);
+              if (lyric[3] && lyric[3].d) {
+                lyric[1].d = lyric[2].d = Math.max(0, lyric[3].d - 3000);
+              }
+            })(str.replace(/\n/g, "\n"));
+
+            (function (maxLen) {
+              var breaks = [];
+              line.reduce(function (a, b) {
+                a += 2;
+                var split = lyric.slice(a, b);
+                var i = a + maxLen - 1;
+                while (b - i > maxLen * 2 - 1) {
+                  var ch = "";
+                  while (i < b - maxLen) {
+                    ch = lyric[i].c;
+
+                    /** 上个字末尾带空格 */
+                    if (ch.length > 1 && /\S+?\s+$/.test(ch)) {
+                      lyric[i].c = ch.replace(/\s*$/, "");
+                      breaks.push(i);
+                      i += maxLen;
+                      continue;
+                    }
+                    i++;
+
+                    /** 这个字是否是空格开头 */
+                    ch = lyric[i].c;
+                    if (/^\s+/.test(ch)) {
+                      lyric[i].c = ch.replace(/^\s+/, "");
+                      breaks.push(i - 1);
+                      i += maxLen - 1;
+                      continue;
+                    }
                   }
-                  //console.log(j,i,lyric[a+b-j].c);
-                  //console.log(j,i,lyric[a+b+j].c);
                 }
-              }
-              //console.log(line[i - 1] - a - 2, a, i)
-            });
-            Breaks.forEach(function (a) {
-              lyric.splice(
-                a,
-                0,
-                { c: "\n", t: 0, d: lyric[a].d, l: 0, i: 0 },
-                { c: "\n", t: 0, d: lyric[a].d, l: 0, i: 0 }
-              );
-            });
-            var i = 0;
-            var l = 0;
-            lyric.forEach(function (a, j) {
-              lyric[j].i = i++;
-              lyric[j].l = l;
-              if (a.c === "\n") {
-                if (i === 1) {
-                  lyric[j].i = 0;
-                  lyric[j].l = ++l;
-                  return;
+
+                // console.log(split);
+                return b;
+              });
+              breaks.forEach((br, i) => {
+                br += i * 2;
+                var last = lyric[br];
+                lyric.splice(br + 1, 0, { d: last.d + last.t, c: "\n", t: 0 }, { d: last.d + last.t, c: "\n", t: 0 });
+              });
+              lyric = lyric.filter(function (a) {
+                return a.c;
+              });
+            })(4);
+
+            var songLyricListText = "";
+            (function (i, l) {
+              lyric.forEach(function (a, j) {
+                lyric[j].i = i++;
+                lyric[j].l = l;
+                if (a.c === "\n") {
+                  if (i === 1) {
+                    lyric[j].i = 0;
+                    lyric[j].l = ++l;
+                    songLyricListText += "<br>";
+                    return;
+                  }
+                  i = 0;
                 }
-                i = 0;
-              }
-            });
-            //console.log(line);
+                songLyricListText += lyric[j].c;
+              });
+            })(0, 0);
+            var songLyricList = $("songLyricList");
+            // console.log(songLyricListText);
+            if (songLyricList) {
+              songLyricList.innerHTML = songLyricListText;
+              introduce = $("song_intro").innerHTML;
+            }
           })(songLyric);
 
           lyricShow();
-          //console.log(lyric);
-          /*console.log(songLyric.split("").map(a => {
-					if (a.charCodeAt() < 57344) {
-						return a
-					}
-					return a.charCodeAt() - 57344
-				}).join(","))*/
         },
         lyricDom = $("lyric"),
         lyricPen = 0,
@@ -805,7 +821,6 @@
             $("@lyric")[lyric[lyricPen - 1].i].style.cssText = "animation-duration:0ms;animation-name:lyric";
           }
 
-          //setTimeout(function () { $("@lyric")[lyricPen].style.cssText = "animation-duration:0ms;animation-name:lyric"; }, lyric[lyricPen].t + 10);
           lyricPen++;
           if (text.t < 30) {
             lyricShow(true);
@@ -882,7 +897,8 @@
                 mid = d;
                 n[3].style.display = "block";
                 n[0].style.display = "none";
-                getSong(a.size_96aac[2] + "00" + fid + "." + a.size_96aac[3], d, function (src) {
+                var songQuality = "size_" + (url.searchParams.get("q") || "96aac");
+                getSong(a[songQuality][2] + "00" + fid + "." + a[songQuality][3], d, function (src) {
                   $("showMain").style.display = src ? "block" : "none";
                   audio.src = src || "data:audio/mp3;base64,";
                   audio.currentTime = 0;
@@ -899,11 +915,13 @@
                       (introduce !== "<p style='text-align: center'>【暂无歌曲介绍】</p>"
                         ? "<p style='text-indent:2em;text-align:left'>" + introduce + "</p>"
                         : "") +
-                      "<p style='text-align: center'>" +
-                      songLyric.replace(/[\ue000-\uf8ff]/g, "").replace(/\n/g, "<br>") +
+                      '<p id="songLyricList" style="text-align: center">' +
+                      // songLyric.replace(/[\ue000-\uf8ff]/g, "").replace(/\n/g, "<br>") +
                       "</p>";
                     $("song_intro").innerHTML = introduce;
-                    songLyric = singer + " - " + songName + "\ue000\n\ue000" + songLyric;
+                    if (songLyric) {
+                      songLyric = singer + " - " + songName + "\ue000\n\ue000" + songLyric;
+                    }
                     lyricDecode();
                   },
                 });
@@ -976,7 +994,6 @@
           $("song_bg").src = song_img;
           showMain();
           $("song_intro").innerHTML = introduce;
-          //(introduce ? ("<p style='text-indent:2em;text-align:left'>" + introduce + "</p>") : "") + "<p style='text-align: center'>" + songLyric.replace(/[\ue000-\uffff]/g, "").replace(/\n/g, "<br>") + "</p>";
           lyricDecode();
         }
         audio.currentTime = 0;
@@ -994,9 +1011,9 @@
         $V.F(smartbox);
       };
       searchInput.onblur = function () {
-        // setTimeout(function () {
-        searchResultStyle.display = "none";
-        // }, 150);
+        setTimeout(function () {
+          searchResultStyle.display = "none";
+        }, 150);
       };
       searchInput.onfocus = function () {
         // setTimeout(function () {
