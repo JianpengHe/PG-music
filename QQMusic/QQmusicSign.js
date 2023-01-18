@@ -64,23 +64,18 @@ function getQQmusicData(h, i, useCookie) {
   );
   https
     .request(
-      "https://u.y.qq.com/cgi-bin/musics.fcg?_=" +
-        new Date().getTime() +
-        "&sign=" +
-        QQmusicSign(j),
+      "https://113.96.208.169/cgi-bin/musics.fcg?_=" + new Date().getTime() + "&sign=" + QQmusicSign(j),
       {
         method: "POST",
         headers: {
+          host: "u.y.qq.com",
           Accept: "*/*",
           "Accept-Language": "zh-CN",
-          "User-Agent":
-            "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/5.0)",
+          "User-Agent": "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/5.0)",
           Cookie:
             useCookie === true
               ? qqMusicCookie ||
-                (qqMusicCookie = String(
-                  fs.readFileSync(__dirname + "/secret/qqMusicCookie.secret")
-                ).trim())
+                (qqMusicCookie = String(fs.readFileSync(__dirname + "/secret/qqMusicCookie.secret")).trim())
               : useCookie || "",
           "Content-Type": "application/x-www-form-urlencoded",
         },
