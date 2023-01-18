@@ -11,15 +11,13 @@ if (cluster.isPrimary) {
     do {
       console.log("获取", i);
       const res = await mysql.query(
-        "SELECT song_id,singer,name FROM `song` ORDER BY `song_id` ASC LIMIT ?," +
-          LIMIT +
-          ";",
+        "SELECT song_id,singer,name FROM `song` ORDER BY `song_id` ASC LIMIT ?," + LIMIT + ";",
         [i]
       );
       if (!res.length) {
         break;
       }
-      res.forEach((a) => {
+      res.forEach(a => {
         a.singer = String(a.singer);
         songList.push(a);
       });
@@ -51,16 +49,16 @@ if (cluster.isPrimary) {
           worker.send(work);
         }
       };
-      worker.on("message", (d) => {
+      worker.on("message", d => {
         if (d) {
           done.set(d.song_id, d);
         }
         getNewWork();
       });
-      worker.on("error", (err) => {
+      worker.on("error", err => {
         console.log(tid, err);
       });
-      worker.on("exit", (code) => {
+      worker.on("exit", code => {
         if (code !== 0) {
           console.log(new Error(`Worker stopped with exit code ${code}`));
         }
@@ -88,39 +86,34 @@ if (cluster.isPrimary) {
   const fs = require("fs");
   const zlib = require("zlib");
   const { encode } = require("../LyricDecode/convert");
-  const { LyricDecode } = require(`../LyricDecode/QQMusicLyricDecode_node-v${
-    process.version.match(/^v(\d{1,2})\./)[1]
-  }-win-x86.node`);
+  const { LyricDecode } = require(`../LyricDecode/index`);
 
   //const { tid } = workerData;
   console.log("子线程", process.pid, "启动");
   const parentPort = process;
   parentPort.on("message", ({ song_id, singer, name }) => {
-    fs.readFile(
-      `../LyricDecode/lyric_file/${song_id}.qqlyric`,
-      (err, lyric) => {
-        if (err || !lyric) {
-          console.log("没有", song_id, singer, name, "的歌词文件");
-          parentPort.send(null);
-          return;
-        }
-        if (lyric.length) {
-          zlib.inflate(LyricDecode(lyric, lyric.length), (err, d) => {
-            if (err || !d) {
-              parentPort.send({ lyric: null, song_id });
-              return;
-            }
-            const delSongInfos = String(singer).split("、");
-            // name && delSongInfos.push(name);
-            parentPort.send({
-              lyric: encode(String(d), delSongInfos),
-              song_id,
-            });
-          });
-          return;
-        }
-        parentPort.send({ lyric: "", song_id });
+    fs.readFile(`../LyricDecode/lyric_file/${song_id}.qqlyric`, (err, lyric) => {
+      if (err || !lyric) {
+        console.log("没有", song_id, singer, name, "的歌词文件");
+        parentPort.send(null);
+        return;
       }
-    );
+      if (lyric.length) {
+        zlib.inflate(LyricDecode(lyric, lyric.length), (err, d) => {
+          if (err || !d) {
+            parentPort.send({ lyric: null, song_id });
+            return;
+          }
+          const delSongInfos = String(singer).split("、");
+          // name && delSongInfos.push(name);
+          parentPort.send({
+            lyric: encode(String(d), delSongInfos),
+            song_id,
+          });
+        });
+        return;
+      }
+      parentPort.send({ lyric: "", song_id });
+    });
   });
 }
