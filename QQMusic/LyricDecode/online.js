@@ -1,11 +1,9 @@
-const { LyricDecode } = require(`./QQMusicLyricDecode_node-v${
-  process.version.match(/^v(\d{1,2})\./)[1]
-}-win-x86.node`);
+const { LyricDecode } = require(`./index`);
 const { getQQmusicData } = require("../QQmusicSign.js");
 const zlib = require("zlib");
 
-const getLyricOnline = (songID) =>
-  new Promise((r) => {
+const getLyricOnline = songID =>
+  new Promise(r => {
     getQQmusicData(
       {
         method: "GetPlayLyricInfo",
@@ -40,7 +38,7 @@ const getLyricOnline = (songID) =>
     );
   });
 if (process.argv[1].includes("online")) {
-  getLyricOnline(Number(process.argv[2] || 260677)).then((a) =>
+  getLyricOnline(Number(process.argv[2] || 260677)).then(a =>
     console.log(String(a).replace(/[\ue000-\uf8ff]/g, ""), a)
   );
 }

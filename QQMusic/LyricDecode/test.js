@@ -1,7 +1,5 @@
 //cls&rd /s /q build&node-gyp configure --arch=ia32&&node-gyp build&&node test
-const { LyricDecode } = require(`./QQMusicLyricDecode_node-v${
-  process.version.match(/^v(\d{1,2})\./)[1]
-}-win-x86.node`);
+const { LyricDecode } = require(`./index`);
 const zlib = require("zlib");
 const fs = require("fs");
 
