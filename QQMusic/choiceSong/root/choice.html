@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta
+      name="viewport"
+      content="initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no"
+    />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="screen-orientation" content="portrait" />
+    <meta name="x5-orientation" content="portrait" />
+    <meta name="renderer" content="webkit" />
+    <meta charset="utf-8" />
+    <title>选择音乐</title>
+    <link
+      rel="stylesheet"
+      href="https://res.wx.qq.com/open/libs/weui/2.1.3/weui.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://tool.hejianpeng.cn/js/weui/200202.css"
+    />
+    <style>
+      .choice {
+        background-color: aqua;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="mainLayer"></div>
+    <div class="weui-toast">
+      <i class="weui-loading weui-icon_toast"></i>
+      <p class="weui-toast__content">正在加载</p>
+    </div>
+    <div id="weui-main">
+      <!--第一页-->
+      <div class="weui-main">
+        <div class="weui-slide">
+          <div id="totalCount" class="weui-title">选择歌曲</div>
+          <div class="weui-cells" id="singerList"></div>
+        </div>
+      </div>
+      <!--第二页-->
+      <div class="weui-main">
+        <div class="weui-slide">
+          <svg
+            onClick="history.back()"
+            class="weui-back"
+            viewBox="0 0 1024 1024"
+          >
+            <path
+              d="M648 307.2H217.6l128-128c12.8-12.8 12.8-32 0-44.8-12.8-12.8-32-12.8-44.8 0L118.4 315.2c-6.4 6.4-9.6 14.4-9.6 22.4s3.2 16 9.6 22.4l180.8 180.8c12.8 12.8 32 12.8 44.8 0 12.8-12.8 12.8-32 0-44.8L219.2 371.2H648c120 0 216 96 216 216s-96 216-216 216H320c-17.6 0-32 14.4-32 32s14.4 32 32 32h328c155.2 0 280-124.8 280-280s-124.8-280-280-280z"
+            ></path>
+          </svg>
+          <div class="weui-title" id="singer"></div>
+          <div class="weui-cells" id="songList"></div>
+        </div>
+      </div>
+    </div>
+  </body>
+  <script src="https://tool.hejianpeng.cn/js/pg_tool/200202.js"></script>
+  <script src="/main.js"></script>
+  <script>
+    if (location.host.indexOf("nfuca.com") < 0) {
+      WeLogin = false;
+    }
+  </script>
+  <script src="https://tool.hejianpeng.cn/js/weui/200202.js"></script>
+  <script src="https://res.wx.qq.com/open/libs/weuijs/1.2.1/weui.min.js"></script>
+  <script src="allsongs.js"></script>
+  <script type="text/javascript">
+    "use strict";
+    var showTime = (a) =>
+      `${String((a / 60) | 0).padStart(2, "0")}:${String(a % 60).padStart(
+        2,
+        "0"
+      )}`;
+    var singer;
+    (function (U) {
+      U = location.host.indexOf("nfuca.com") < 0 ? "api/" : U + "music";
+      var choice = new Map();
+      var updateCount = function () {
+        // var obj={};
+        Object.keys(info).forEach((k) => {
+          info[k].count = 0;
+          info[k].duration = 0;
+        });
+        var count = 0;
+        var totalDuration = 0;
+        [...choice.values()].forEach(({ duration, singer }) => {
+          count++;
+          totalDuration += Number(duration);
+          info[singer].count++;
+          info[singer].duration += Number(duration);
+        });
+        $("totalCount").innerHTML = `已选${count}首，合计${Math.ceil(
+          totalDuration / 60
+        )}分钟`;
+        Object.keys(info).forEach((k) => {
+          $("choice_" + k).innerHTML = info[k].count
+            ? `，已选${info[k].count}首，合计${Math.ceil(
+                info[k].duration / 60
+              )}分钟`
+            : "";
+        });
+      };
+      $("singerList").innerHTML = Object.keys(info)
+        .map(
+          (k, i) => `<a
+          data-name="${encodeURIComponent(k)}"
+              href="javascript:"
+              class="weui-media-box weui-media-box_appmsg weui-cell_active weui-cell_access"
+            >
+              <div class="weui-media-box__bd">
+                <strong class="weui-media-box__title">${
+                  i + 1
+                }、${k}<span id="choice_${k}"></span></strong>
+                <p class="weui-media-box__desc">
+                  共${info[k].length}首
+                </p>
+              </div>
+              <span class="weui-cell__ft">共${info[k].length}首</span>
+            </a>`
+        )
+        .join("");
+      $A({
+        U: "api/get",
+        M: "GET",
+        S(a) {
+          (a || []).forEach((o) => choice.set(o.media_mid, o));
+
+          updateCount();
+
+          $T.B({
+            D: $("singerList"),
+            S: function (d) {
+              if (!d) {
+                return;
+              }
+              singer = decodeURIComponent(d);
+              $("singer").innerHTML = singer;
+
+              var S = function (d) {
+                $("songList").innerHTML = d
+                  .map(
+                    ({ name, duration, media_mid, total }, i) => `<a
+                id="M${media_mid}"
+          data-name="${media_mid}"
+              href="javascript:"
+              class="weui-media-box weui-media-box_appmsg${
+                choice.has(media_mid) ? " choice" : ""
+              }"
+            >
+              <div class="weui-media-box__bd">
+                <strong class="weui-media-box__title">${
+                  i + 1
+                }、${singer} - ${name}</strong>
+                <p class="weui-media-box__desc">
+                  共${total}条评论
+                </p>
+              </div>
+              <span class="weui-cell__ft">${showTime(duration)}</span>
+            </a>`
+                  )
+                  .join("");
+              };
+
+              if (info[singer].song.length) {
+                S(info[singer].song);
+              } else {
+                $A({
+                  U: singer + ".json",
+                  M: "GET",
+                  S: function (d) {
+                    d = d.sort((a, b) => b.total - a.total);
+                    info[singer].song = d;
+                    // [...choice.values()]
+                    //   .filter((a) => singer === a.singer)
+                    //   .forEach((a) => {
+                    //     var newobj = d.find(({ name }) => name === a.name);
+                    //     choice.delete(a.media_mid);
+                    //     if (newobj) {
+                    //       choice.set(newobj.media_mid, newobj);
+                    //     }
+                    //   });
+                    S(d);
+                  },
+                });
+                $("songList").innerHTML = "正在加载";
+              }
+              _P.F();
+            },
+          });
+        },
+      });
+      $T.B({
+        D: $("songList"),
+        S: function (d) {
+          if (!d) {
+            return;
+          }
+          if (choice.has(d)) {
+            choice.delete(d);
+            $("M" + d).className = "weui-media-box weui-media-box_appmsg";
+          } else {
+            choice.set(
+              d,
+              (info[singer].song || []).find(({ media_mid }) => media_mid === d)
+            );
+            $("M" + d).className =
+              "weui-media-box weui-media-box_appmsg choice";
+          }
+          var xhr = new XMLHttpRequest();
+          xhr.open("POST", "api/post");
+          xhr.send(JSON.stringify([...choice.values()]));
+          updateCount();
+        },
+      });
+    })(Weui.oauth.url + ":32564/");
+  </script>
+</html>
