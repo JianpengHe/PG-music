@@ -1,55 +1,68 @@
-//const https = require("https");
+const https = require("https");
 /** 请先运行存储过程“创建下载列表” */
-//const { replace, mysql } = require("../comm/mysql_con");
+const { replace, mysql } = require("../comm/mysql_con");
 const { request } = require("../comm/index");
+const server = `https://${String(fs.readFileSync("../secret/serverHost.secret"))}:${String(
+  fs.readFileSync("../secret/serverPort.secret")
+)}/getPlayUrl`;
+const NEW_PATH = "D:/songs";
 /** 0.未登录 1.免费试听 2.VIP用户 */
-const Method = Number(process.argv[2] || 0);
-let useCookie = false;
-const fileType = [
-  ["C400", ".m4a", "96aac"],
-  ["M800", ".mp3", "320mp3"],
-  ["F000", ".flac", "flac"],
-];
-const getSQL = (LIMIT = "") => {
-  let is_vip = false;
-  let getAllType = false;
-  let filter = "(expire is null or expire<now())";
-
-  switch (Method) {
-    case 0:
-      is_vip = false;
-      getAllType = false;
-      break;
-    case 1:
-      is_vip = true;
-      getAllType = false;
-      break;
-    case 2:
-      is_vip = true;
-      getAllType = true;
-      break;
-  }
-
-  if (is_vip) {
-    useCookie = true;
-  } else {
-    filter += " and is_vip=0";
-  }
-
-  filter += ` and (${fileType
-    .slice(0, getAllType ? fileType.length : 1)
-    .map(([_, _2, d_name]) => `(RAM_size_${d_name} is null AND size_${d_name} !=0)`)
-    .join(" or ")})`;
-
-  return (
-    "SELECT album_id,a.* FROM (SELECT media_mid,size_96aac,size_320mp3,size_flac,is_vip,down_mid FROM `download` WHERE " +
-    (filter || 1) +
-    (LIMIT ? ` LIMIT ${LIMIT}` : "") +
-    ") a INNER JOIN song on a.media_mid=song.media_mid;"
+const level = Number(process.argv[2] || 0);
+const sleep = time => new Promise(r => setTimeout(r, time));
+const get = url =>
+  new Promise(r =>
+    https.get(url, { rejectUnauthorized: false }, res => {
+      const body = [];
+      res.on("data", c => body.push(c));
+      res.on("end", () => r(JSON.parse(String(Buffer.concat(body)))));
+    })
   );
-};
-
 (async () => {
-  const sql = getSQL();
-  console.log();
+  //return
+  let split = [];
+  while (
+    (split = await mysql.query(
+      `SELECT file_name,down_mid FROM download WHERE down_mid is not null and level <=${level} and disk_size is null and expire<now() and thread_lock is null ORDER BY down_mid ASC LIMIT 20`,
+      []
+    )).length
+  ) {
+    //const map = new Map(split.map(obj => [obj.file_name, obj]));
+
+    const db = (
+      await get(
+        `${server}?${split
+          .map(({ file_name, down_mid }) => `filename=${file_name}&songmid=${String(down_mid).split(",")[0]}`)
+          .join("&")}`
+      )
+    )
+      //.filter(({ filename, purl }) => filename && purl)
+      //.sort((a, b) => a.down_mid > b.down_mid)
+      .map(({ filename, purl }, i) => ({
+        file_name: filename || split[i].file_name,
+        down_mid: purl
+          ? String(split[i].down_mid).split(",")[0]
+          : String(split[i].down_mid).split(",").slice(1).join(",") || null,
+        url: purl || null,
+        expire: purl ? new Date(new Date().getTime() + 80000000) : "0000-00-00 00:00:00",
+      }));
+
+    await replace("download", db);
+    const count = db.filter(({ url }) => url).length;
+    await sleep(count * Math.random() * 250 + 4000);
+    //}
+    // await sleep(2000);
+
+    console.log(
+      "剩余",
+      (
+        await mysql.query(
+          `SELECT COUNT(*) as n FROM download WHERE down_mid is not null and level <=${level} and disk_size is null and expire<now() and thread_lock is null`,
+          []
+        )
+      )[0].n,
+      count
+    );
+  }
+  process.exit();
+  // console.log(list);
 })();
