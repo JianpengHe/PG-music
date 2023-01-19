@@ -1,13 +1,14 @@
+const { Worker, isMainThread, parentPort, workerData } = require("worker_threads");
 const https = require("https");
+const fs = require("fs");
 /** 请先运行存储过程“创建下载列表” */
 const { replace, mysql } = require("../comm/mysql_con");
-const { request } = require("../comm/index");
-const server = `https://${String(fs.readFileSync("../secret/serverHost.secret"))}:${String(
-  fs.readFileSync("../secret/serverPort.secret")
+// const { request } = require("../comm/index");
+const server = `https://${String(workerData?.serverHost ?? fs.readFileSync("../secret/serverHost.secret"))}:${String(
+  workerData?.serverPort ?? fs.readFileSync("../secret/serverPort.secret")
 )}/getPlayUrl`;
-const NEW_PATH = "D:/songs";
 /** 0.未登录 1.免费试听 2.VIP用户 */
-const level = Number(process.argv[2] || 0);
+const level = workerData?.level ?? Number(process.argv[2] || 0);
 const sleep = time => new Promise(r => setTimeout(r, time));
 const get = url =>
   new Promise(r =>
@@ -18,6 +19,9 @@ const get = url =>
     })
   );
 (async () => {
+  if (!isMainThread) {
+    console.log("Worker", __filename, "启动");
+  }
   //return
   let split = [];
   while (
@@ -63,6 +67,6 @@ const get = url =>
       count
     );
   }
-  process.exit();
+  process.exit(0);
   // console.log(list);
 })();

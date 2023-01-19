@@ -1,6 +1,7 @@
 const { Worker, isMainThread, parentPort, workerData } = require("worker_threads");
+const fs = require("fs");
 const mysql_con = require("../comm/mysql_con");
-const BACKUP_PATH = "D:/songs/data";
+const BACKUP_PATH = "D:/songs/backup";
 const PATH = "D:/songs/album";
 
 const singer = {
@@ -79,13 +80,55 @@ const newWorker = (path, workerData) =>
   });
 
 (async () => {
-  console.log("第一步");
-  console.log(
-    await Promise.all([
-      //newWorker("getMainInfo.js", { singer }),
-      newWorker("readFileSizeToDB.js", { BACKUP_PATH, PATH }),
-    ])
+  const [_, { backupFileMap, fileMap }] = await Promise.all([
+    newWorker("getMainInfo.js", { singer }),
+    newWorker("readFileSizeToDB.js", { BACKUP_PATH, PATH }),
+  ]);
+  console.log("已下载文件数", fileMap.size, "backup文件数", backupFileMap.size);
+
+  await mysql_con.mysql.query("UPDATE `media` SET `is_vip`=null,`down_mid`=null;", []);
+  await mysql_con.mysql.query(
+    "UPDATE (SELECT media_mid,min(is_vip) as need_vip FROM song WHERE disabled=0 GROUP BY media_mid)b INNER join media on media.media_mid=b.media_mid set media.is_vip=b.need_vip WHERE media.media_mid in (SELECT media_mid FROM song WHERE album_id in (SELECT albumID FROM album)) and (	size_96aac>0 or size_320mp3>0 or size_flac>0);",
+    []
   );
+  await mysql_con.mysql.query(
+    "UPDATE (SELECT song.media_mid,mid FROM media INNER JOIN song on media.media_mid=song.media_mid WHERE media.is_vip=song.is_vip and song.disabled=0) a INNER JOIN media on a.media_mid=media.media_mid set media.down_mid=a.mid;",
+    []
+  );
+
+  //TRUNCATE `download`;
+  await mysql_con.mysql.query(`DELETE FROM download`, []);
+  console.log("add aac");
+  await mysql_con.mysql.query(
+    'INSERT INTO download SELECT CONCAT("C400",media_mid,".m4a"),down_mid,media_mid,size_96aac,is_vip,"","0000-00-00 00:00:00",null,null,null FROM `media` WHERE down_mid is not null and (disk_size_96aac is null AND (size_96aac !=0 or size_96aac!=disk_size_96aac));',
+    []
+  );
+
+  console.log("add mp3");
+  await mysql_con.mysql.query(
+    'INSERT INTO download SELECT CONCAT("M800",media_mid,".mp3"),down_mid,media_mid,size_320mp3,2,"","0000-00-00 00:00:00",null,null,null FROM `media` WHERE down_mid is not null and (disk_size_320mp3 is null AND (size_320mp3 !=0 or size_320mp3!=disk_size_320mp3));',
+    []
+  );
+
+  console.log("add flac");
+  await mysql_con.mysql.query(
+    'INSERT INTO download SELECT CONCAT("F000",media_mid,".flac"),down_mid,media_mid,size_flac,2,"","0000-00-00 00:00:00",null,null,null FROM `media` WHERE down_mid is not null and (disk_size_flac is null AND (size_flac !=0 or size_flac!=disk_size_flac));',
+    []
+  );
+  await mysql_con.mysql.query(
+    "UPDATE (SELECT media_mid,group_concat(album_id) as album_ids,group_concat(mid) as mids FROM song WHERE media_mid in (SELECT media_mid FROM download) and album_id in (SELECT albumID FROM album) GROUP BY media_mid) a INNER JOIN download on a.media_mid=download.media_mid set download.album_ids=a.album_ids,download.down_mid=a.mids;",
+    []
+  );
+
+  await Promise.all([
+    newWorker("getSongDownloadUrl.js", {
+      level: 2,
+      serverHost: String(fs.readFileSync("../secret/serverHost.secret")),
+      serverPort: String(fs.readFileSync("../secret/serverPort.secret")),
+    }),
+    newWorker("download.js", { PATH }),
+    newWorker("getExtraInfo.js", {}),
+  ]);
 
   setTimeout(() => {
     process.exit();

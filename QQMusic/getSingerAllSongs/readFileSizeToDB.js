@@ -3,14 +3,14 @@ const fs = require("fs");
 const { replace } = workerData?.mysql_con || require("../comm/mysql_con");
 const { fileType, findSongFile } = require("../comm/index");
 
-const BACKUP_PATH = workerData?.BACKUP_PATH || "D:/qsongs/data";
+const BACKUP_PATH = workerData?.BACKUP_PATH;
 const PATH = workerData?.PATH || "D:/songs/album";
 const Thread = 1000;
 (async () => {
   if (!isMainThread) {
     console.log("Worker", __filename, "启动");
   }
-  const backupFileMap = await findSongFile(BACKUP_PATH);
+  const backupFileMap = BACKUP_PATH ? await findSongFile(BACKUP_PATH) : new Map();
   const fileMap = await findSongFile(PATH);
   const fileList = [...new Set([...fileMap.keys(), ...backupFileMap.keys()])];
   const dbMap = new Map();
@@ -30,7 +30,7 @@ const Thread = 1000;
       return;
     }
     fs.stat(path, (err, d) => {
-      const type = fileType.find((_, h) => fileName.includes(h));
+      const type = fileType.find(([_, h]) => fileName.includes(h));
       if (err || !d || !type) {
         newThread(_, tid);
         return;
@@ -45,10 +45,11 @@ const Thread = 1000;
     });
   };
   const allDone = async () => {
+    console.log("读取硬盘文件完毕");
     if (dbMap.size) {
       await replace("media", [...dbMap.values()]);
     }
-    console.log("读取硬盘文件完毕");
+    console.log("写入数据库完毕");
     parentPort?.postMessage({ backupFileMap, fileMap });
     process.exit(0);
   };

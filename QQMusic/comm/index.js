@@ -356,7 +356,7 @@ const findSongFile = async Path => {
       let reg;
       if (h.isDirectory()) {
         await find(path + "/" + h.name);
-      } else if ((reg = isFileTypeReg.test(h.name)) && reg[0]) {
+      } else if ((reg = h.name.match(isFileTypeReg)) && reg[0]) {
         if (!fileMap.has(reg[0])) {
           fileMap.set(reg[0], []);
         }

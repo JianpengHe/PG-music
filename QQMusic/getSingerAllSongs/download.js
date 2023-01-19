@@ -1,3 +1,4 @@
+const { Worker, isMainThread, parentPort, workerData } = require("worker_threads");
 const https = require("https");
 const fs = require("fs");
 const { mysql, replace } = require("../comm/mysql_con");
@@ -8,7 +9,7 @@ const keepAliveAgent = new https.Agent({
 });
 const Thread = 6;
 const ThreadRand = 12345;
-const PATH = "D:/songs/album";
+const PATH = workerData?.PATH || "D:/songs/album";
 
 const sleep = time => new Promise(r => setTimeout(() => r(), time));
 const albumList = new Set();
@@ -64,19 +65,29 @@ const newThread = async (_, tid) => {
       `UPDATE (SELECT file_name FROM download WHERE expire>now() and url is not null and thread_lock is null and disk_size is null ORDER BY expire DESC LIMIT 10) a INNER JOIN download on a.file_name=download.file_name set download.thread_lock=?`,
       [tid]
     );
-    if (!affectedRows) {
-      console.log("线程", tid, "空闲");
-      await sleep(5000);
-      continue;
-    }
     const downloadInfo = await mysql.query(
       `SELECT file_name,album_ids,url FROM download WHERE  thread_lock =? and url is not null`,
       [tid]
     );
-    if (!downloadInfo.length) {
-      console.log("线程", tid, "空闲2");
+    if (!affectedRows || !downloadInfo.length) {
+      console.log("线程", tid, "空闲");
       await sleep(5000);
-      continue;
+      if (
+        Number(
+          String(
+            (
+              await mysql.query(
+                `SELECT COUNT(*) as n FROM download WHERE down_mid is not null and disk_size is null and expire<now() and thread_lock is null`,
+                []
+              )
+            )[0].n
+          )
+        )
+      ) {
+        continue;
+      } else {
+        break;
+      }
     }
     const result = await Promise.all(downloadInfo.map(download));
     console.log("线程", tid, "完成了", result.length);
@@ -85,5 +96,8 @@ const newThread = async (_, tid) => {
 };
 
 fs.readdirSync(PATH).forEach(a => albumList.add(Number(a)));
+if (!isMainThread) {
+  console.log("Worker", __filename, "启动");
+}
 
-Array(Thread).fill(0).forEach(newThread);
+Promise.all(Array(Thread).fill(0).map(newThread)).then(() => process.exit(0));
