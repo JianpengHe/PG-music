@@ -8,6 +8,8 @@ const {
   DoSearchForQQMusicDesktop,
   GetCommentCount,
   getFansCount,
+  readAction,
+  keySort,
 } = require("../comm/index");
 const { XML } = require("../comm/XML");
 const { replace, mysql } = require("../comm/mysql_con");
@@ -76,7 +78,7 @@ const singer = {
   "001wYy5s2mM3Tq": "黎明",
 };
 // let replace = async () => {};
-const getInfo = async (singer_mid) => {
+const getInfo = async singer_mid => {
   const [singerInfo, songList, albumList, searchResult] = await request([
     GetSingerDetail(singer_mid),
     GetSingerSongList(singer_mid),
@@ -96,9 +98,7 @@ const getInfo = async (singer_mid) => {
     album_conut: albumList.total,
     search_conut: searchResult.meta.sum,
     //  genre: ex_info.genre,
-    wiki: JSON.stringify(
-      XML.parse(wiki, ({ path }) => path[path.length - 1] === "item").info
-    ),
+    wiki: JSON.stringify(XML.parse(wiki, ({ path }) => path[path.length - 1] === "item").info),
   };
   await replace("singer", info);
   return info;
@@ -106,9 +106,7 @@ const getInfo = async (singer_mid) => {
 
 const flat = (arr, ...keys) => {
   const lastKey = keys.splice(-1, 1)[0];
-  return keys
-    .reduce((arr, key) => arr.map((obj) => obj[key]).flat(), arr)
-    .map((obj) => obj[lastKey]);
+  return keys.reduce((arr, key) => arr.map(obj => obj[key]).flat(), arr).map(obj => obj[lastKey]);
 };
 
 const unFlat = (arr, num, ...count) => {
@@ -121,11 +119,12 @@ const unFlat = (arr, num, ...count) => {
   return unFlat(o, ...count);
 };
 
-const saveSongList = async (songList) => {
+const saveSongList = async songList => {
   await replace(
     "song",
-    songList.map(
-      ({
+    songList.map(songInfo => {
+      readAction(songInfo);
+      const {
         id,
         mid,
         name,
@@ -143,7 +142,13 @@ const saveSongList = async (songList) => {
         tag,
         grp_from_song_id,
         pay,
-      }) => ({
+        // fnote,
+        action,
+        tid,
+        disabled,
+        copyright,
+      } = songInfo;
+      return {
         song_id: id,
         mid,
         name,
@@ -165,19 +170,23 @@ const saveSongList = async (songList) => {
         tag,
         grp_from_song_id, //: grp ? (grp || []).map(({ id }) => id).join(",") : null,
         is_vip: pay.pay_play,
-      })
-    )
+        // fnote,
+        tid,
+        disabled,
+        copyright,
+        action: JSON.stringify(keySort((action, action))),
+      };
+    })
   );
   await replace(
     "media",
-    songList.map(
-      ({ file: { media_mid, size_96aac, size_320mp3, size_flac } }) => ({
-        media_mid,
-        size_96aac,
-        size_320mp3,
-        size_flac,
-      })
-    )
+    songList.map(({ file: { media_mid, size_96aac, size_320mp3, size_flac, disabled } }) => ({
+      media_mid,
+      size_96aac,
+      size_320mp3,
+      size_flac,
+      disabled,
+    }))
   );
 };
 
@@ -191,9 +200,7 @@ const getSingerSongList = async (singer_mid, song_conut) => {
       await request(
         Array(Math.min(Req_Pre_Count, Math.ceil(Req_Total - i * Req_Pre_Count)))
           .fill(0)
-          .map((_, index) =>
-            GetSingerSongList(singer_mid, i * Req_Pre_Count + index)
-          )
+          .map((_, index) => GetSingerSongList(singer_mid, i * Req_Pre_Count + index))
       ),
       "songList",
       "songInfo"
@@ -225,34 +232,17 @@ const getSingerAlbum = async (singer_mid, album_conut) => {
   for (let i = 0; i < albumList.length / Req_Pre_Count; i++) {
     console.log(singer_mid, "GetAlbum", i);
     /** 当前处理的专辑列表 */
-    const thisAlbumList = albumList.slice(
-      i * Req_Pre_Count,
-      (i + 1) * Req_Pre_Count
+    const thisAlbumList = albumList.slice(i * Req_Pre_Count, (i + 1) * Req_Pre_Count);
+    const songList = flat(await request(thisAlbumList.map(GetAlbumSongList)), "songList", "songInfo").filter(
+      ({ file }) => file?.media_mid
     );
-    const songList = flat(
-      await request(thisAlbumList.map(GetAlbumSongList)),
-      "songList",
-      "songInfo"
-    ).filter(({ file }) => file?.media_mid);
     await Promise.all([
       replace(
         "album",
         (
           await request(thisAlbumList.map(GetAlbumDetail))
         ).map(
-          ({
-            basicInfo: {
-              albumID,
-              albumMid,
-              albumName,
-              albumType,
-              publishDate,
-              genre,
-              desc,
-            },
-            company,
-            singer,
-          }) => ({
+          ({ basicInfo: { albumID, albumMid, albumName, albumType, publishDate, genre, desc }, company, singer }) => ({
             albumID,
             albumMid,
             albumName,
@@ -260,11 +250,7 @@ const getSingerAlbum = async (singer_mid, album_conut) => {
             publishDate,
             genre,
             company: company.name,
-            singer: JSON.stringify(
-              ((singer || {}).singerList || [])
-                .map(({ singerID }) => String(singerID))
-                .sort()
-            ),
+            singer: JSON.stringify(((singer || {}).singerList || []).map(({ singerID }) => String(singerID)).sort()),
             introduce: desc,
           })
         )
@@ -285,12 +271,7 @@ const searchSingerSongList = async (singer_mid, search_conut, song_ids) => {
       await request(
         Array(Math.min(Req_Pre_Count, Math.ceil(Req_Total - i * Req_Pre_Count)))
           .fill(0)
-          .map((_, index) =>
-            DoSearchForQQMusicDesktop(
-              singer[singer_mid],
-              i * Req_Pre_Count + index
-            )
-          )
+          .map((_, index) => DoSearchForQQMusicDesktop(singer[singer_mid], i * Req_Pre_Count + index))
       ),
       "body",
       "song",
@@ -301,27 +282,19 @@ const searchSingerSongList = async (singer_mid, search_conut, song_ids) => {
         item.grp_from_song_id = item.id;
       }
       if (Array.isArray(item.grp)) {
-        item.grp.forEach((sub_grp) => {
+        item.grp.forEach(sub_grp => {
           sub_grp.grp_from_song_id = item.id;
           list.push(sub_grp);
         });
         delete item.grp;
       }
     }
-    await saveSongList(
-      list.filter(({ id, file }) => song_ids.has(id) && file?.media_mid)
-    );
+    await saveSongList(list.filter(({ id, file }) => song_ids.has(id) && file?.media_mid));
   }
 };
 
 const commentCount = async () => {
-  const song_ids = flat(
-    await mysql.query(
-      "SELECT song_id FROM `song` WHERE `comment_count` IS NULL",
-      []
-    ),
-    "song_id"
-  );
+  const song_ids = flat(await mysql.query("SELECT song_id FROM `song` WHERE `comment_count` IS NULL", []), "song_id");
   let i = 0;
   for (const req of unFlat(song_ids, 25, 10)) {
     console.log("GetCommentCount", song_ids.length - i * 250, i);
@@ -374,15 +347,7 @@ const getFansCounts = async () => {
 (async () => {
   for (const singer_mid of Object.keys(singer)) {
     const { song_conut, album_conut, search_conut } = await getInfo(singer_mid);
-    console.log(
-      singer[singer_mid],
-      "歌曲数",
-      song_conut,
-      "专辑数",
-      album_conut,
-      "搜索结果数",
-      search_conut
-    );
+    console.log(singer[singer_mid], "歌曲数", song_conut, "专辑数", album_conut, "搜索结果数", search_conut);
     const song_ids = new Set([
       ...(await getSingerSongList(singer_mid, song_conut)),
       ...(await getSingerAlbum(singer_mid, album_conut)),

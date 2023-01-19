@@ -9,8 +9,8 @@ const Req_Valve = 2000;
 
 let last_req_time = 0;
 
-const MD5 = (str) => crypto.createHash("md5").update(str).digest("hex");
-const keySort = (obj) => {
+const MD5 = str => crypto.createHash("md5").update(str).digest("hex");
+const keySort = obj => {
   if (obj instanceof Object && !Array.isArray(obj)) {
     return Object.keys(obj)
       .sort()
@@ -18,10 +18,72 @@ const keySort = (obj) => {
   }
   return obj;
 };
-const sleep = (time) => new Promise((r) => setTimeout(() => r(), time));
+const readAction = songInfo => {
+  const { action, pay, file } = songInfo;
+  if (!action) {
+    return;
+  }
+  action.play = 0;
+  songInfo.disabled = 0;
+  songInfo.tryIcon = 0;
+  if (action.switch !== undefined) {
+    const bit = action.switch.toString(2).split("");
+    bit.pop();
+    bit.reverse();
+    [
+      "play_lq",
+      "play_hq",
+      "play_sq",
+      "down_lq",
+      "down_hq",
+      "down_sq",
+      "soso",
+      "fav",
+      "share",
+      "bgm",
+      "ring",
+      "sing",
+      "radio",
+      "try",
+      "give",
+      "poster",
+      "play_5_1",
+      "down_5_1",
+      "bullet",
+      "cache_lq",
+      "cache_hq",
+      "cache_sq",
+      "cache_dts",
+      "track_pay",
+    ].forEach((k, p) => {
+      action[k] = parseInt(bit[p], 10) || 0;
+    });
+  }
+  if (action.icons !== undefined) {
+    const icons = action.icons.toString(2).split("");
+    icons.reverse();
+    songInfo.copyright = parseInt(icons[0], 10);
+    songInfo.isVip = parseInt(icons[18], 10);
+  }
+  if (action.play_lq || action.play_hq || action.play_sq || action.play_5_1) {
+    action.play = 1;
+  }
+  if (action.try && (file?.size_try ?? 0) > 0) {
+    songInfo.tryPlay = 1;
+  }
+  if (!(action.play || pay?.pay_play || pay?.pay_down)) {
+    if (songInfo.tryPlay) {
+      songInfo.tryIcon = 1;
+    } else {
+      songInfo.disabled = 1;
+    }
+  }
+};
+
+const sleep = time => new Promise(r => setTimeout(() => r(), time));
 // fs.mkdir(__dirname + "/request_cache/", () => {});
-const readFile = (obj) =>
-  new Promise((r) =>
+const readFile = obj =>
+  new Promise(r =>
     fs.readFile(obj.path, (err, file) => {
       if (err || !file) {
         r(obj);
@@ -46,7 +108,7 @@ const requestQQmusic = (reqBody, cb, err = 0) => {
     console.log(reqBody);
     throw new Error("err too more");
   }
-  const error = (e) => {
+  const error = e => {
     console.log(e);
     setTimeout(() => requestQQmusic(reqBody, cb, err + 1), 3000);
   };
@@ -58,8 +120,7 @@ const requestQQmusic = (reqBody, cb, err = 0) => {
         headers: {
           Accept: "*/*",
           "Accept-Language": "zh-CN",
-          "User-Agent":
-            "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/5.0)",
+          "User-Agent": "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/5.0)",
           Cookie: "uin=10849964;",
           "Content-Type": "application/x-www-form-urlencoded",
         },
@@ -87,7 +148,7 @@ const requestQQmusic = (reqBody, cb, err = 0) => {
     .on("error", error)
     .end(reqBody);
 };
-const save_request_cache = (obj) => {
+const save_request_cache = obj => {
   zlib.deflate(Buffer.from(JSON.stringify(obj.data)), (err, file) => {
     if (err || !file) {
       return;
@@ -98,7 +159,7 @@ const save_request_cache = (obj) => {
 const request = async (req, useCache = true) => {
   const isArray = Array.isArray(req);
   req = isArray ? req : [req];
-  const objs = req.map((item) => {
+  const objs = req.map(item => {
     item.param = keySort(item.param);
     const ob = {
       item,
@@ -110,15 +171,13 @@ const request = async (req, useCache = true) => {
     ob.path =
       useCache &&
       (useCache === true
-        ? `${__dirname}/request_cache/${item.method}.${MD5(
-            JSON.stringify(item.param)
-          )}.deflate`
+        ? `${__dirname}/request_cache/${item.method}.${MD5(JSON.stringify(item.param))}.deflate`
         : useCache(ob));
     return ob;
   });
 
   if (useCache) {
-    await Promise.all(objs.map((obj) => obj.read_request_cache(obj)));
+    await Promise.all(objs.map(obj => obj.read_request_cache(obj)));
   }
 
   const needReq = objs.filter(({ data }) => !data);
@@ -145,15 +204,10 @@ const request = async (req, useCache = true) => {
       }
     )
   );
-  await sleep(
-    last_req_time +
-      Req_Valve +
-      Math.ceil(Math.random() * 3000) -
-      (last_req_time = new Date().getTime())
-  );
+  await sleep(last_req_time + Req_Valve + Math.ceil(Math.random() * 3000) - (last_req_time = new Date().getTime()));
   let errTimes = 0;
   while (1) {
-    const res = await new Promise((r) => requestQQmusic(reqBody, r));
+    const res = await new Promise(r => requestQQmusic(reqBody, r));
     if (
       !needReq.some((obj, index) => {
         const data = res["req_" + index];
@@ -183,7 +237,7 @@ const request = async (req, useCache = true) => {
   return isArray ? objs.map(({ data }) => data) : objs[0].data;
 };
 
-const GetSingerDetail = (singer_mid) => ({
+const GetSingerDetail = singer_mid => ({
   module: "music.musichallSinger.SingerInfoInter",
   method: "GetSingerDetail",
   param: {
@@ -195,12 +249,12 @@ const GetSingerDetail = (singer_mid) => ({
   },
 });
 
-const GetAlbumDetail = (albumMid) => ({
+const GetAlbumDetail = albumMid => ({
   module: "music.musichallAlbum.AlbumInfoServer",
   method: "GetAlbumDetail",
   param: { albumMid },
 });
-const GetAlbumSongList = (albumMid) => ({
+const GetAlbumSongList = albumMid => ({
   module: "music.musichallAlbum.AlbumSongList",
   method: "GetAlbumSongList",
   param: { albumMid, begin: 0, num: 999, order: 2 },
@@ -242,11 +296,11 @@ const DoSearchForQQMusicDesktop = (query, start = 0) => ({
 });
 DoSearchForQQMusicDesktop.MAX_num_per_page = 60;
 
-const GetCommentCount = (ids) => ({
+const GetCommentCount = ids => ({
   module: "GlobalComment.GlobalCommentReadServer",
   method: "GetCommentCount",
   param: {
-    request_list: ids.map((id) => ({
+    request_list: ids.map(id => ({
       biz_type: 1,
       biz_id: String(id),
       biz_sub_type: 1,
@@ -254,7 +308,7 @@ const GetCommentCount = (ids) => ({
   },
 });
 
-const GetPlayLyricInfo = (songID) => ({
+const GetPlayLyricInfo = songID => ({
   module: "music.musichallSong.PlayLyricInfo",
   method: "GetPlayLyricInfo",
   param: {
@@ -271,12 +325,12 @@ const GetPlayLyricInfo = (songID) => ({
   },
 });
 
-const getFansCount = (singerMid) =>
-  new Promise((r) =>
+const getFansCount = singerMid =>
+  new Promise(r =>
     https.get(
       `https://c.y.qq.com/rsc/fcgi-bin/fcg_order_singer_getnum.fcg?_=${new Date().getTime()}&uin=0&format=json&inCharset=utf-8&outCharset=utf-8&notice=0&platform=wk_v17&needNewCode=0&singermid=${singerMid}&utf8=1`,
       { headers: { referer: "https://y.qq.com/wk_v17" } },
-      async (res) => {
+      async res => {
         const body = [];
         for await (const chuck of res) {
           body.push(chuck);
@@ -289,6 +343,7 @@ const getFansCount = (singerMid) =>
 module.exports = {
   keySort,
   request,
+  readAction,
   GetAlbumDetail,
   GetAlbumSongList,
   GetSingerDetail,
