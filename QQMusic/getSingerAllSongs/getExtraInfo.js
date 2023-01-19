@@ -7,11 +7,14 @@ const {
   GetSingerSongList,
   GetAlbumList,
   DoSearchForQQMusicDesktop,
+  GetCommentCount,
+  getFansCount,
   readAction,
   keySort,
 } = require("../comm/index");
 const { XML } = require("../comm/XML");
-const { replace } = workerData?.mysql_con || require("../comm/mysql_con");
+const { replace, mysql } = workerData?.mysql_con || require("../comm/mysql_con");
+const { getLyric } = require("../LyricDecode/getLyric");
 
 const singer = workerData?.singer || {
   "002pUZT93gF4Cu": "BEYOND",
@@ -178,11 +181,12 @@ const saveSongList = async songList => {
   );
   await replace(
     "media",
-    songList.map(({ file: { media_mid, size_96aac, size_320mp3, size_flac } }) => ({
+    songList.map(({ file: { media_mid, size_96aac, size_320mp3, size_flac, disabled } }) => ({
       media_mid,
       size_96aac,
       size_320mp3,
       size_flac,
+      disabled,
     }))
   );
 };
@@ -290,10 +294,58 @@ const searchSingerSongList = async (singer_mid, search_conut, song_ids) => {
   }
 };
 
-(async () => {
-  if (!isMainThread) {
-    console.log("Worker", __filename, "启动");
+const commentCount = async () => {
+  const song_ids = flat(await mysql.query("SELECT song_id FROM `song` WHERE `comment_count` IS NULL", []), "song_id");
+  let i = 0;
+  for (const req of unFlat(song_ids, 25, 10)) {
+    console.log("GetCommentCount", song_ids.length - i * 250, i);
+    i++;
+    await replace(
+      "song",
+      flat(await request(req.map(GetCommentCount), false), "response_list")
+        .flat()
+        .map(({ biz_id, count }) => ({
+          song_id: Number(biz_id),
+          comment_count: count,
+        }))
+    );
+    //return;
   }
+};
+
+const getLyrics = async (start = 0) => {
+  const songList = await mysql.query(
+    "SELECT song_id,singer,name FROM `song` WHERE `lyric` IS NULL  ORDER BY `song_id` ASC LIMIT 0,1000;",
+    []
+  );
+  let i = 0;
+  for (const req of unFlat(songList, 25)) {
+    console.log("getLyrics", "第", start, "次", songList.length - i * 25);
+    i++;
+    await replace(
+      "song",
+      (await getLyric(req)).filter(({ song_id }) => song_id)
+    );
+    // return;
+  }
+  if (songList.length === 1000) {
+    await getLyrics(start + 1);
+  }
+};
+
+const getFansCounts = async () => {
+  const db = [];
+  for (const { singer_id, singer_mid, name } of await mysql.query(
+    "SELECT 	singer_id,singer_mid,name FROM `singer` WHERE `fans_count` IS NULL",
+    []
+  )) {
+    console.log("getFansCounts", name);
+    db.push({ singer_id, fans_count: await getFansCount(singer_mid) });
+  }
+  await replace("singer", db);
+};
+
+(async () => {
   for (const singer_mid of Object.keys(singer)) {
     const { song_conut, album_conut, search_conut } = await getInfo(singer_mid);
     console.log(singer[singer_mid], "歌曲数", song_conut, "专辑数", album_conut, "搜索结果数", search_conut);
@@ -304,6 +356,9 @@ const searchSingerSongList = async (singer_mid, search_conut, song_ids) => {
     // replace = require("../comm/mysql_con").replace;
     await searchSingerSongList(singer_mid, search_conut, song_ids);
   }
+  await commentCount();
+  await getLyrics();
+  await getFansCounts();
   setTimeout(() => {
     process.exit();
   }, 1000);

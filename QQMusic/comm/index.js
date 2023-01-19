@@ -340,6 +340,34 @@ const getFansCount = singerMid =>
     )
   );
 
+const fileType = [
+  ["C400", ".m4a", "96aac"],
+  ["M800", ".mp3", "320mp3"],
+  ["F000", ".flac", "flac"],
+];
+const findSongFile = async Path => {
+  // /(C400[a-z\d]+?\.m4a)|(M800[a-z\d]+?\.mp3)|(F000[a-z\d]+?\.flac)$/i
+  const isFileTypeReg = new RegExp(`${fileType.map(([q, h]) => `(${q}[a-z\\d]+?\\${h})`).join("|")}$`, "i");
+
+  const fileMap = new Map();
+
+  const find = async path => {
+    for (const h of await fs.promises.readdir(path, { withFileTypes: true })) {
+      let reg;
+      if (h.isDirectory()) {
+        await find(path + "/" + h.name);
+      } else if ((reg = isFileTypeReg.test(h.name)) && reg[0]) {
+        if (!fileMap.has(reg[0])) {
+          fileMap.set(reg[0], []);
+        }
+        fileMap.get(reg[0]).push(path + "/" + h.name);
+      }
+    }
+  };
+  await find(Path);
+  return fileMap;
+};
+
 module.exports = {
   keySort,
   request,
@@ -353,6 +381,8 @@ module.exports = {
   GetCommentCount,
   GetPlayLyricInfo,
   getFansCount,
+  fileType,
+  findSongFile,
 };
 // console.log(keySort({ c: 99, a: { d: 5, c: [3, 2, 1] } }));
 
