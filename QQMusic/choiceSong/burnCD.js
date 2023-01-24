@@ -62,7 +62,7 @@ const readFLACInfo = buf => {
       ...info,
       filename,
       size: Math.ceil(info.duration),
-      name: filename.substring(sp + 3),
+      name: filename.substring(sp + 3, filename.length - 5),
       singer: filename.substring(0, sp),
     };
     if (info.sampleRate !== 44100 || info.channel !== 2 || info.bitsPerSample !== 16) {
