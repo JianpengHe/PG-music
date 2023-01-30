@@ -1,4 +1,4 @@
-#include "des.cc"
+#include "des.cpp"
 #include <node.h>
 #include <node_buffer.h>
 

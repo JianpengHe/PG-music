@@ -1,5 +1,5 @@
 /*********************************************************************
-* Filename:   des.cc
+* Filename:   des.cpp
 * Author:     Brad Conte (brad AT radconte.com)
 * Copyright:
 * Disclaimer: This code is presented "as is" without any guarantees.
