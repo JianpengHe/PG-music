@@ -2,7 +2,7 @@
   "targets": [
     {
       "target_name": "QQMusicLyricDecode",
-      "sources": [ "LyricDecode.cc" ]
+      "sources": [ "LyricDecode.node-addon.cpp" ]
     }
   ]
 }

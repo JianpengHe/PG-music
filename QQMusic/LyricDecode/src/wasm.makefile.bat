@@ -1,0 +1,1 @@
+emcc "LyricDecode.cpp" -s "EXPORTED_FUNCTIONS=[_LyricDecode,_malloc,_free]" -s WASM=1 -o "LyricDecode.js" -O3

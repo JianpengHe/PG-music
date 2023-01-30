@@ -1,4 +1,3 @@
-// emcc "QQMusicLyricDecode.cpp" -s "EXPORTED_FUNCTIONS=[_LyricDecode,_malloc,_free]" -s WASM=1 -o "QQMusicLyricDecode.js"
 #include "des.cpp"
 
 unsigned char KEY1[] = "!@#)(NHLiuy*$%^&";
@@ -9,6 +8,7 @@ extern "C"
   int LyricDecode(unsigned char *content, int len);
 }
 int LyricDecode(unsigned char *content, int len);
+
 int func_des(unsigned char *buff, unsigned char *key, int len)
 {
   BYTE schedule[16][6];
@@ -26,6 +26,7 @@ int func_ddes(unsigned char *buff, unsigned char *key, int len)
     des_crypt(buff + i, buff + i, schedule);
   return 0;
 }
+
 int LyricDecode(unsigned char *content, int len)
 {
   func_ddes(content, KEY1, len);
