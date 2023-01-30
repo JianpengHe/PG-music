@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  </head>
+
+  <body></body>
+  <script type="text/javascript">
+    try {
+      new DecompressionStream("deflate");
+    } catch (e) {
+      document.write('<script src="inflate.min.js"></scr' + "ipt>");
+    }
+    const inflate = function (arrayBuffer) {
+      try {
+        return new Response(
+          new Response(arrayBuffer).body.pipeThrough(new DecompressionStream("deflate"))
+        ).arrayBuffer();
+      } catch (e) {
+        return new Promise(function (resolve) {
+          resolve(new Zlib.Inflate(arrayBuffer).decompress());
+        });
+      }
+    };
+  </script>
+  <script type="text/javascript">
+    var prinfBuf = buf =>
+      console.log(
+        `String(require("zlib").inflateSync(Buffer.from("${[...buf]
+          .map(a => a.toString(16).padStart(2, "0"))
+          .join("")}","hex")))`
+      );
+    var go = LyricDecode => {
+      const fn = id =>
+        fetch(id + ".qqlyric")
+          .then(a => a.arrayBuffer())
+          .then(function (resBuffer) {
+            return inflate(LyricDecode(resBuffer));
+          })
+          .then(function (a) {
+            return new TextDecoder().decode(a);
+          });
+      Promise.all([106584881, 578445, 7110504].map(fn)).then(a =>document.body.innerHTML= a[0]);
+    };
+    //require("fs").writeFileSync("QQMusicLyricDecode.wasm.deflate",require("zlib").deflateSync(require("fs").readFileSync("QQMusicLyricDecode.wasm")))
+    fetch("QQMusicLyricDecode.wasm.deflate")
+      .then(function (res) {
+        return res.arrayBuffer();
+      })
+      .then(inflate)
+      .then(function (buf) {
+        return WebAssembly.instantiate(buf, {
+          a: { a: function () {} },
+        });
+      })
+      .then(function (res) {
+        var wasmMemory = new Uint8Array(res.instance.exports.b.buffer),
+          LyricDecode = res.instance.exports.d,
+          malloc = res.instance.exports.e,
+          free = res.instance.exports.f;
+        return function (buf) {
+          var strBuffer = new Uint8Array(buf);
+          var strPointer = malloc(strBuffer.length + 1);
+          wasmMemory.set(strBuffer, strPointer);
+          wasmMemory[strPointer + strBuffer.length] = 0;
+          var size = LyricDecode(strPointer, strBuffer.length);
+          var decodeBuf = new Uint8Array(wasmMemory.buffer, strPointer, size);
+          free(strPointer);
+          return decodeBuf;
+        };
+      })
+      .then(go);
+  </script>
+
+</html>
