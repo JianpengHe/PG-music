@@ -5,3 +5,5 @@
 *.secret
 *.qqlyric
 *.7z
+*.cue
+/QQMusic/choiceSong/save.json
