@@ -568,8 +568,8 @@
           E: "input",
           F: smartboxSearch,
         }),
-        getSong = function (fileName, m, cb) {
-          if (fileName in cache) {
+        getSong = function (fileName, m, isDownload, cb) {
+          if (fileName in cache && !(isDownload && !/^blob:/.test(cache[fileName]))) {
             cb(cache[fileName]);
             return;
           }
@@ -579,8 +579,18 @@
               cb("");
               return;
             }
-            cache[fileName] = "https://ws.stream.qqmusic.qq.com/" + purl;
-            cb(cache[fileName]);
+            if (isDownload) {
+              fetch("https://ws.stream.qqmusic.qq.com/" + purl)
+                .then(function (a) {
+                  _M("正在下载", true);
+                  return a.blob();
+                })
+                .then(function (blob) {
+                  cb((cache[fileName] = window.URL.createObjectURL(blob)));
+                });
+            } else {
+              cb((cache[fileName] = "https://ws.stream.qqmusic.qq.com/" + purl));
+            }
           };
           $J({
             U:
@@ -898,7 +908,7 @@
                 n[3].style.display = "block";
                 n[0].style.display = "none";
                 var songQuality = "size_" + (url.searchParams.get("q") || "96aac");
-                getSong(a[songQuality][2] + "00" + fid + "." + a[songQuality][3], d, function (src) {
+                getSong(a[songQuality][2] + "00" + fid + "." + a[songQuality][3], d, false, function (src) {
                   $("showMain").style.display = src ? "block" : "none";
                   audio.src = src || "data:audio/mp3;base64,";
                   audio.currentTime = 0;
@@ -1033,14 +1043,15 @@
           dialog.show();
           //_M("测试中");
           //return;
-          getSong(d[2] + "00" + fid + "." + d[3], mid, function (src) {
+          getSong(d[2] + "00" + fid + "." + d[3], mid, true, function (src) {
             if (!src) {
               return;
             }
             $U.D({
               T: "a",
               href: src,
-              target: "new",
+              download: singer + " - " + songName + "." + d[3],
+              //target: "new",
             }).D.click();
           });
         },
