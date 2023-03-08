@@ -3,10 +3,64 @@
   <head>
     <meta charset="utf-8" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        background-color: black;
+      }
+      #lyric {
+        /* position: fixed; */
+        /* width: 100%; */
+        /* height: 50px;
+        bottom: 5%; */
+        z-index: 999;
+        pointer-events: none;
+        text-align: center;
+        font-size: 18px;
+        line-height: 50px;
+        /* opacity: 0; */
+        transition: opacity 0.5s;
+        left: 0;
+        white-space: nowrap;
+      }
+
+      #lyric span {
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-color: rgba(150, 150, 150, 1);
+        background-image: linear-gradient(#01e5ff, #01e5ff);
+        background-repeat: no-repeat;
+        background-size: 0%;
+        animation-fill-mode: forwards;
+        animation-timing-function: linear;
+        animation-delay: 0s;
+        animation-iteration-count: 1;
+        animation-direction: normal;
+        animation-play-state: running;
+      }
+
+      .stop span {
+        animation-play-state: paused !important;
+      }
+      @keyframes lyric {
+        0% {
+          background-size: 0%;
+        }
+
+        100% {
+          background-size: 100%;
+        }
+      }
+    </style>
   </head>
 
-  <body></body>
-  <script src="QQMusicLyricDecode.min.js"></script>
+  <body>
+    <audio src="M800004V8Yph2t2V7s.mp3" controls></audio>
+    <div id="lyric"></div>
+  </body>
+  <!-- <script src="QQMusicLyricDecode.min.js"></script>
   <script type="text/javascript">
     const fn = id =>
       fetch("/lyric_file/" + id + ".qqlyric")
@@ -19,5 +73,46 @@
       console.log(a);
       fn(7110504).then(a => console.log(a));
     });
+  </script> -->
+
+  <script src="QQMusicLyric.js"></script>
+  <script type="text/javascript">
+    var audio = document.getElementsByTagName("audio")[0];
+
+    var musicLyric = new QQMusicLyric(audio);
+    audio.onplay = () => {
+      document.getElementById("lyric").classList = "";
+      musicLyric.lyricFlat.forEach(function (c) {
+        document.getElementsByName("lyric")[c.index].style.cssText ="animation-duration:" + c.duration + "ms;animation-name:lyric;animation-delay:" + (c.start-audio.currentTime*1000) + "ms;"
+      });
+    };
+    audio.onpause = () => {
+      document.getElementById("lyric").classList = "stop";
+    };
+
+    fetch("/lyric_file/1251167.qqlyric")
+      .then(a => a.arrayBuffer())
+      .then(buf =>
+        musicLyric.newLyric([...new Uint8Array(buf)].map(a => a.toString(16).padStart(2, "0")).join(""), "ku")
+      )
+      .then(a => {
+        console.log(a);
+        //console.log(a.map(b => b.chs.map(c => c.ch).join("")).join("\n"));
+        // audio.onplay=()=>{
+        //    document.getElementById("lyric").innerHTML = a
+        //   .map(b => b.chs.map(c => "<span name='lyric' style='animation-duration:" + c.duration + "ms;animation-name:lyric;animation-delay:" + (c.start-audio.currentTime*1000) + "ms;'>" + c.ch + "</span>").join(""))
+        //   .join("<br>");
+        // }
+        document.getElementById("lyric").innerHTML = a
+          .map(b => b.chs.map(c => "<span name='lyric'>" + c.ch + "</span>").join(""))
+          .join("<br>");
+      });
+    // musicLyric.onChar = function (type, { duration, index }, delay) {
+    //   //delay=0
+    //   document.getElementsByName("lyric")[index].style.cssText =
+    //     type === "unplay"
+    //       ? ""
+    //       : "animation-duration:" + duration + "ms;animation-name:lyric;animation-delay:" + delay + "ms;";
+    // };
   </script>
 </html>
