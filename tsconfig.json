@@ -1,0 +1,87 @@
+{
+  // 指定需要编译文件 否则默认当前目录下除了exclude之外的所有.ts, .d.ts,.tsx 文件
+ //"include": ["*.ts"],
+  // 不编译某些文件
+  "exclude": ["*.js", "*.d.ts", "node_modules"],
+  "compilerOptions": {
+    // 只编译修改过的文件,这个时候会生成tsconfig.tsbuildinfo,下次编译的时候会进行对比只编译修改过的文件
+    "incremental": true,
+    // 指定 ECMAScript 目标版本: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017', or 'ESNEXT'
+    "target": "ESNEXT",
+    "pretty": true,
+
+    // 指定使用模块: 'commonjs', 'amd', 'system', 'umd' or 'es2015'
+    "module": "commonjs",
+    /* 注意：如果未指定--lib，则会注入默认的librares列表。注入的默认库为：
+      对于 --target ES5: DOM,ES5,ScriptHost
+      对于 --target ES6: DOM,ES6,DOM.Iterable,ScriptHost
+      TS 绝不会在您的代码中注入polyfill,所以需要你自己制定编译lib */
+    // 允许编译JS
+    "allowJs": false,
+    // 指定 jsx 代码的生成: 'preserve', 'react-native', or 'react'
+    /* 如果设为true，编译每个ts文件之后会生成一个js文件和一个声明文件,
+      declaration和allowJs不能同时设为true */
+    "declaration": false,
+    // 值为true或false，指定是否为声明文件.d.ts生成map文件
+    "declarationMap": false,
+    // 用来指定编译时是否生成.map文件
+    "sourceMap": true,
+    // 是否编译构建引用项目,很复杂后面介绍
+    "composite": false,
+    // 编译的时候删除注释
+    "removeComments": true,
+    // 不生成编译文件，这个一般比较少用,这个build目录下将没有任何文件,但是会进行编译,有错误会抛出
+    "noEmit": false,
+    // 当target为'ES5' or 'ES3'时，为'for-of', spread, and destructuring'中的迭代器提供完全支持
+    "downlevelIteration": true,
+    // isolatedModules的值为true或false，指定是否将每个文件作为单独的模块，默认为true，它不可以和declaration同时设定
+    // 不是很理解,将每一个文件作为单独模块
+    //"isolatedModules": true,
+    /* Strict Type-Checking Options */
+    // 严格模式将会打开下面的几个选项
+    "strict": true,
+    /* 不允许变量或函数参数具有隐式any类型,例如
+      function(name) {
+          return name;
+      } */
+    "noImplicitAny": false,
+    // null类型检测,const teacher: string = null;会报错
+    "strictNullChecks": true,
+    // 对函数参数进行严格逆变比较
+    "strictFunctionTypes": true,
+    // 严格检查bind call apply
+    "strictBindCallApply": true,
+    // 此规则将验证构造函数内部初始化前后已定义的属性。
+    "strictPropertyInitialization": true,
+    // 检测this是否隐式指定
+    "noImplicitThis": true,
+    // 使用js的严格模式,在每一个文件上部声明 use strict
+    "alwaysStrict": true,
+    /* Additional Checks */
+    // 默认false,是否检测定义了但是没使用的变量
+    "noUnusedLocals": false,
+    // 用于检查是否有在函数体中没有使用的参数
+    "noUnusedParameters": false,
+    // 用于检查函数是否有返回值，设为true后，如果函数没有返回值则会提示
+    "noImplicitReturns": true,
+    // 用于检查switch中是否有case没有使用break跳出switch
+    "noFallthroughCasesInSwitch": true,
+    /* Module Resolution Options */
+    //"rootDirs": [],
+    // 用来指定允许从没有默认导出的模块中默认导入
+    "allowSyntheticDefaultImports": true,
+    // 通过为导入内容创建命名空间，实现CommonJS和ES模块之间的互操作性
+    // "esModuleInterop": true,
+    // 不把符号链接解析为真实路径，具体可以了解下webpack和node.js的symlink相关知识
+    "preserveSymlinks": true,
+    "allowUmdGlobalAccess": true,
+    // inlineSources用于指定是否进一步将ts文件的内容也包含到输出文件中
+    "inlineSources": true,
+
+    // experimentalDecorators用于指定是否启用实验性的装饰器特性
+    "experimentalDecorators": true
+
+    // emitDecoratorMetadata用于指定是否为装上去提供元数据支持，关于元数据，也是ES6的新标准，可以通过Reflect提供的静态方法获取元数据，如果需要使用Reflect的一些方法，需要引用ES2015.Reflect这个库
+    // "emitDecoratorMetadata": true
+  }
+}

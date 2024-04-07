@@ -7,3 +7,5 @@
 *.7z
 *.cue
 /QQMusic/choiceSong/save.json
+/dist
+src/*/*.js
