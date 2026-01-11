@@ -6,6 +6,8 @@
 *.qqlyric
 *.7z
 *.cue
+*.map
 /QQMusic/choiceSong/save.json
 /dist
 src/*/*.js
+*.tsbuildinfo

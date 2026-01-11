@@ -491,6 +491,4 @@ export function decodeQrc(hexString: string): Uint8Array {
   return data;
 }
 
-console.log(
-  zlib.inflateSync(Buffer.from(decodeQrc(fs.readFileSync("lyric_file/1251167.qqlyric", "hex")))).toString("utf8"),
-);
+console.log(Array.from(decodeQrc(fs.readFileSync("lyric_file/1251167.qqlyric", "hex"))).join(","));

@@ -5,13 +5,11 @@ const order = Array(62)
   .map((_, i) => (i < 52 ? ((i % 26) + 10).toString(36) : String(i - 52)))
   .join("");
 
-const MD5: (str: string) => string =
-  globalThis["$MD5"] ||
-  (() => {
-    //@ts-ignore
-    const crypto = __non_webpack_require__("crypto");
-    return (str: string) => crypto.createHash("md5").update(str).digest("hex");
-  })();
+if (!globalThis["window"]) {
+  //@ts-ignore
+  const crypto = __non_webpack_require__("crypto");
+  globalThis["$MD5"] = (str: string) => crypto.createHash("md5").update(str).digest("hex");
+}
 
 const getArrIndex = (str: string | number[], indexArr: number[]) => indexArr.map(index => str[index] || "").join("");
 const midKey = (hash: string) => {
@@ -33,7 +31,7 @@ const midKey = (hash: string) => {
 };
 
 export default (str: string) => {
-  const hash = MD5(str).toLowerCase();
+  const hash = globalThis["$MD5"](str).toLowerCase();
   return "zzb" + getArrIndex(hash, key.slice(0, 8)) + midKey(hash) + getArrIndex(hash, key.slice(24));
 };
 

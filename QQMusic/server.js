@@ -38,9 +38,10 @@ https
         });
       }
     }
+    // console.log(req.headers.host);
     const req2 = https.request(
       {
-        host: "113.96.208.169",
+        host: "183.47.112.109",
         path: req.url,
         rejectUnauthorized: false,
         headers: req.headers,
@@ -51,7 +52,7 @@ https
         res2.on("error", () => {});
         res.writeHead(res2.statusCode, res2.headers);
         res2.pipe(res);
-      }
+      },
     );
     // recvAll(req).then(d => {
     //   req2.end(d);
@@ -85,10 +86,10 @@ const getSongVkey = (songmid, filename, cb) =>
           songmid,
           filename,
           purl,
-        }))
+        })),
       ),
 
-    cookie
+    cookie,
   );
 const setControlHeader = (res, time) => {
   const now = new Date();
@@ -178,7 +179,7 @@ https
             }
             res.end(lyricText);
           });
-        }
+        },
       );
       return;
     }
