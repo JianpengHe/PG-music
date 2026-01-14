@@ -229,6 +229,9 @@ export class QQmusicBrowserSDK extends QQmusicRequest {
             name: string;
             title: string;
           }[];
+          file: {
+            media_mid: string;
+          };
         }[];
       };
       sum: number;
