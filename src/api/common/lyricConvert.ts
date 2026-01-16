@@ -429,6 +429,93 @@ export const stringToLyricToken = (() => {
   };
 })();
 
+export class LyricShow {
+  private lyricLine: LyricToken[][] = [];
+  private duration: number = 0;
+  constructor(
+    private readonly onLyricLineChange: (lyricLineDomString: string, index: number) => void,
+    private readonly getOffsetTime: () => number,
+  ) {}
+  static formatLyric(lyric: LyricToken[], maxTokenPerLine = 5) {
+    const output: LyricToken[][] = [];
+    let curLine: LyricToken[] = [];
+    let nowTokenCount = 0;
+    for (const token of lyric) {
+      const isBlank = /^\s*$/.test(token.text);
+      if (nowTokenCount === 0 && isBlank) continue;
+      if (nowTokenCount >= maxTokenPerLine && isBlank) {
+        output.push(curLine);
+        curLine = [];
+        nowTokenCount = 0;
+      }
+      curLine.push(token);
+      nowTokenCount++;
+    }
+    if (curLine.length > 0) output.push(curLine);
+    console.log(output);
+    return output;
+  }
+  public loadLyric(lyricLine: LyricToken[][], duration: number) {
+    this.lyricLine = lyricLine;
+    this.duration = duration * 1000;
+    this.play();
+  }
+
+  private timer: number = 0;
+  public play() {
+    const currentTime = this.getOffsetTime() * 1000;
+    const lastToken = this.lyricLine[this.lyricLine.length - 1][this.lyricLine[this.lyricLine.length - 1].length - 1];
+    const maxTime = lastToken.absoluteTime + lastToken.duration;
+    if (this.timer) clearTimeout(this.timer);
+    if (currentTime >= maxTime) {
+      this.timer = Number(
+        setTimeout(
+          () => {
+            this.timer = 0;
+            this.play();
+          },
+          this.duration - currentTime + 100,
+        ),
+      );
+      return;
+    }
+
+    for (let i = 0; i < this.lyricLine.length; i++) {
+      const line = this.lyricLine[i];
+
+      if (!line[0]) continue;
+      if (line[0].absoluteTime > currentTime) {
+        const lastLine = i > 0 ? this.lyricLine[i - 1] : undefined;
+        const lastLineEndTime = lastLine
+          ? lastLine[lastLine.length - 1].absoluteTime + lastLine[lastLine.length - 1].duration
+          : 0;
+        const showTime = lastLine ? (line[0].absoluteTime - lastLineEndTime) / 2 + lastLineEndTime : 0;
+        this.timer = Number(
+          setTimeout(() => {
+            this.timer = 0;
+            const currentTime = this.getOffsetTime() * 1000;
+            this.onLyricLineChange(
+              line
+                .map(
+                  ({ absoluteTime, duration, text }) =>
+                    `<span style="animation-delay: ${absoluteTime - currentTime}ms;animation-duration: ${duration}ms;animation-name: lyric;">${text}</span>`,
+                )
+                .join(""),
+              i,
+            );
+            this.play();
+          }, showTime - currentTime),
+        );
+        break;
+      }
+    }
+  }
+  public pause() {
+    clearTimeout(this.timer);
+    this.timer = 0;
+  }
+}
+
 // 为了兼容旧的 CommonJS 引用方式，如果需要可以保留下面这行，但在纯TS环境中通常只需 export const
 // module.exports = { encode, decode };
 export default { encode: encodeLyricToken, decode: stringToLyricToken };

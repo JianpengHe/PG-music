@@ -192,7 +192,7 @@ export class QQmusicBrowserSDK extends QQmusicRequest {
     });
     if (code !== 0) throw new Error("获取歌词失败");
     try {
-      return encodeLyricToken(await QQmusicBrowserSDK.inflateUint8Array(lyricDecoder(data.lyric)));
+      return encodeLyricToken(await QQmusicBrowserSDK.inflateUint8Array(lyricDecoder(data.lyric)), []);
     } catch (error: unknown) {
       console.error("处理歌词数据时出错:", error);
       return [];
