@@ -447,6 +447,7 @@ export class LyricShow {
         output.push(curLine);
         curLine = [];
         nowTokenCount = 0;
+        continue;
       }
       curLine.push(token);
       nowTokenCount++;
@@ -458,16 +459,23 @@ export class LyricShow {
   public loadLyric(lyricLine: LyricToken[][], duration: number) {
     this.lyricLine = lyricLine;
     this.duration = duration * 1000;
+    this.curLineIndex = -1;
     this.play();
   }
 
   private timer: number = 0;
+  private curLineIndex: number = -1;
   public play() {
+    if (!this.lyricLine.length) return;
+
     const currentTime = this.getOffsetTime() * 1000;
+    console.log("play()", currentTime);
     const lastToken = this.lyricLine[this.lyricLine.length - 1][this.lyricLine[this.lyricLine.length - 1].length - 1];
     const maxTime = lastToken.absoluteTime + lastToken.duration;
-    if (this.timer) clearTimeout(this.timer);
+
     if (currentTime >= maxTime) {
+      console.log("currentTime >= maxTime", currentTime, maxTime);
+      if (this.timer) clearTimeout(this.timer);
       this.timer = Number(
         setTimeout(
           () => {
@@ -482,14 +490,15 @@ export class LyricShow {
 
     for (let i = 0; i < this.lyricLine.length; i++) {
       const line = this.lyricLine[i];
-
+      const nextLine = i < this.lyricLine.length - 1 ? this.lyricLine[i + 1] : undefined;
       if (!line[0]) continue;
-      if (line[0].absoluteTime > currentTime) {
+      if (nextLine === undefined || !nextLine[0] || nextLine[0].absoluteTime > currentTime) {
         const lastLine = i > 0 ? this.lyricLine[i - 1] : undefined;
         const lastLineEndTime = lastLine
           ? lastLine[lastLine.length - 1].absoluteTime + lastLine[lastLine.length - 1].duration
           : 0;
         const showTime = lastLine ? (line[0].absoluteTime - lastLineEndTime) / 2 + lastLineEndTime : 0;
+        console.log("showTime - currentTime", showTime, currentTime);
         this.timer = Number(
           setTimeout(() => {
             this.timer = 0;
@@ -503,7 +512,16 @@ export class LyricShow {
                 .join(""),
               i,
             );
-            this.play();
+            if (!nextLine) return;
+            this.timer = Number(
+              setTimeout(
+                () => {
+                  this.timer = 0;
+                  this.play();
+                },
+                nextLine[0].absoluteTime - currentTime + 100,
+              ),
+            );
           }, showTime - currentTime),
         );
         break;
