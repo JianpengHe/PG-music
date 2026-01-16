@@ -259,4 +259,7 @@ export class QQmusicBrowserSDK extends QQmusicRequest {
     if (!purl) throw new Error("获取播放URL失败");
     return "https://ws.stream.qqmusic.qq.com/" + purl;
   }
+  public getMusicImgUrl(pmid: string) {
+    return `https://y.gtimg.cn/music/photo_new/T002R300x300M000${pmid}.jpg?max_age=2592000`;
+  }
 }
