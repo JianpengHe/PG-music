@@ -429,108 +429,180 @@ export const stringToLyricToken = (() => {
   };
 })();
 
-export class LyricShow {
-  private lyricLine: LyricToken[][] = [];
-  private duration: number = 0;
-  constructor(
-    private readonly onLyricLineChange: (lyricLineDomString: string, index: number) => void,
-    private readonly getOffsetTime: () => number,
-  ) {}
-  static formatLyric(lyric: LyricToken[], maxTokenPerLine = 5) {
-    const output: LyricToken[][] = [];
-    let curLine: LyricToken[] = [];
-    let nowTokenCount = 0;
-    for (const token of lyric) {
-      const isBlank = /^\s*$/.test(token.text);
-      if (nowTokenCount === 0 && isBlank) continue;
-      if (nowTokenCount >= maxTokenPerLine && isBlank) {
-        output.push(curLine);
-        curLine = [];
-        nowTokenCount = 0;
-        continue;
-      }
-      curLine.push(token);
-      nowTokenCount++;
+/* ======================= 歌词分行 ======================= */
+export function formatLyricLine(lyric: LyricToken[], maxTokenPerLine = 5): LyricToken[][] {
+  const result: LyricToken[][] = [];
+  let line: LyricToken[] = [];
+  let count = 0;
+
+  for (const token of lyric) {
+    const isBlank = /^\s*$/.test(token.text);
+
+    // 行首不允许空白
+    if (count === 0 && isBlank) continue;
+
+    // 达到上限并遇到空白 → 换行
+    if (count >= maxTokenPerLine && isBlank) {
+      result.push(line);
+      line = [];
+      count = 0;
+      continue;
     }
-    if (curLine.length > 0) output.push(curLine);
-    console.log(output);
-    return output;
+
+    line.push(token);
+    count++;
   }
-  public loadLyric(lyricLine: LyricToken[][], duration: number) {
-    this.lyricLine = lyricLine;
-    this.duration = duration * 1000;
-    this.curLineIndex = -1;
+
+  if (line.length) result.push(line);
+  return result;
+}
+export class LyricShow {
+  /** 歌词按行拆分后的结构 */
+  private lyricLines: LyricToken[][] = [];
+
+  /**
+   * 每一行歌词「应该被显示」的时间点（ms）
+   *
+   * 语义说明：
+   * - 当 currentTimeMs < lineShowTimeList[i] 时，说明还在上一行
+   * - 当 currentTimeMs >= lineShowTimeList[i] 时，切换到第 i 行
+   *
+   * 该时间点使用的是：
+   * 上一行最后一个字的结束时间
+   * 与 当前行第一个字的开始时间
+   * 的「中点时间」（人为提前一点用于观感）
+   */
+  private readonly lineShowTimeList: number[] = [];
+
+  /** 当前正在显示的歌词行索引 */
+  private currentLineIndex = -1;
+
+  /** 当前用于歌词调度的唯一计时器 */
+  private timer = 0;
+
+  constructor(
+    /** 歌词行切换时的回调（返回拼好的 HTML） */
+    private readonly onLyricLineChange: (html: string, index: number) => void,
+    /** 获取当前音频播放时间（秒） */
+    private readonly getOffsetTime: () => number,
+  ) {
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        this.play();
+      }
+    });
+  }
+
+  /* ======================= 歌词加载 ======================= */
+
+  public loadLyric(lines: LyricToken[][], duration: number) {
+    this.lyricLines = lines;
+    this.lineShowTimeList.length = 0;
+
+    /**
+     * 利用 reduce 逐行计算「行显示中点时间」
+     * prev 表示上一行
+     * cur  表示当前行
+     *
+     * 注意：
+     * - 第 0 行不会在这里生成时间
+     * - 真正使用的是「下一行 > 当前时间」的判定方式
+     */
+    lines.reduce((prevLine, currentLine) => {
+      const prevLastToken = prevLine[prevLine.length - 1];
+
+      const prevLineEndTime = prevLastToken.absoluteTime + prevLastToken.duration;
+
+      const currentLineStartTime = currentLine[0].absoluteTime;
+
+      // 中点时间（略微提前 10ms，用于观感与定时器误差修正）
+      const showTime = currentLineStartTime - (currentLineStartTime - prevLineEndTime) / 2 - 50;
+
+      this.lineShowTimeList.push(showTime);
+      return currentLine;
+    });
+
+    /**
+     * 末尾追加一个哨兵时间
+     * 确保 findIndex 永远能命中
+     */
+    this.lineShowTimeList.push(duration * 1000 + 10);
+
+    this.currentLineIndex = -1;
     this.play();
+
+    console.log(this.lineShowTimeList, this.lyricLines);
   }
 
-  private timer: number = 0;
-  private curLineIndex: number = -1;
-  public play() {
-    if (!this.lyricLine.length) return;
+  /* ======================= 主播放调度 ======================= */
 
-    const currentTime = this.getOffsetTime() * 1000;
-    console.log("play()", currentTime);
-    const lastToken = this.lyricLine[this.lyricLine.length - 1][this.lyricLine[this.lyricLine.length - 1].length - 1];
-    const maxTime = lastToken.absoluteTime + lastToken.duration;
-
-    if (currentTime >= maxTime) {
-      console.log("currentTime >= maxTime", currentTime, maxTime);
-      if (this.timer) clearTimeout(this.timer);
-      this.timer = Number(
-        setTimeout(
-          () => {
-            this.timer = 0;
-            this.play();
-          },
-          this.duration - currentTime + 100,
-        ),
-      );
+  public async play() {
+    if (!this.lyricLines.length) {
+      this.onLyricLineChange("", -1);
       return;
     }
 
-    for (let i = 0; i < this.lyricLine.length; i++) {
-      const line = this.lyricLine[i];
-      const nextLine = i < this.lyricLine.length - 1 ? this.lyricLine[i + 1] : undefined;
-      if (!line[0]) continue;
-      if (nextLine === undefined || !nextLine[0] || nextLine[0].absoluteTime > currentTime) {
-        const lastLine = i > 0 ? this.lyricLine[i - 1] : undefined;
-        const lastLineEndTime = lastLine
-          ? lastLine[lastLine.length - 1].absoluteTime + lastLine[lastLine.length - 1].duration
-          : 0;
-        const showTime = lastLine ? (line[0].absoluteTime - lastLineEndTime) / 2 + lastLineEndTime : 0;
-        console.log("showTime - currentTime", showTime, currentTime);
-        this.timer = Number(
-          setTimeout(() => {
-            this.timer = 0;
-            const currentTime = this.getOffsetTime() * 1000;
-            this.onLyricLineChange(
-              line
-                .map(
-                  ({ absoluteTime, duration, text }) =>
-                    `<span style="animation-delay: ${absoluteTime - currentTime}ms;animation-duration: ${duration}ms;animation-name: lyric;">${text}</span>`,
-                )
-                .join(""),
-              i,
-            );
-            if (!nextLine) return;
-            this.timer = Number(
-              setTimeout(
-                () => {
-                  this.timer = 0;
-                  this.play();
-                },
-                nextLine[0].absoluteTime - currentTime + 100,
-              ),
-            );
-          }, showTime - currentTime),
-        );
-        break;
-      }
+    // 当前音频播放时间（ms）
+    const currentTimeMs = this.getOffsetTime() * 1000;
+    if (currentTimeMs < 0) {
+      this.pause();
+      return;
     }
+    /**
+     * 找到第一个「显示时间 > 当前时间」的行
+     * 其索引即为当前应该展示的歌词行
+     */
+    const lineIndex = this.lineShowTimeList.findIndex(time => time >= currentTimeMs) || 0;
+
+    console.log("lineIndex", lineIndex, "sleep", this.lineShowTimeList[lineIndex] - currentTimeMs);
+
+    this.currentLineIndex = lineIndex;
+
+    /**
+     * 构建当前行的歌词 HTML
+     * animation-delay 使用 token 的绝对时间减去当前播放时间
+     * 使动画与音频精确对齐
+     */
+    const html = this.lyricLines[lineIndex]
+      .map(
+        ({ absoluteTime, duration, text }) =>
+          `<span style="animation-delay: ${absoluteTime - currentTimeMs - 10}ms;animation-duration: ${duration}ms;">${text}</span>`,
+      )
+      .join("");
+
+    this.onLyricLineChange(html, lineIndex);
+
+    /**
+     * 等待直到下一次歌词切换时间点
+     * 再递归调用 play 进入下一行
+     */
+    await this.delayNext(this.lineShowTimeList[lineIndex] - currentTimeMs + 5);
+
+    this.play();
   }
+
   public pause() {
-    clearTimeout(this.timer);
+    if (this.timer) clearTimeout(this.timer);
     this.timer = 0;
+  }
+
+  /* ======================= 定时器封装 ======================= */
+
+  /**
+   * 用 Promise 包装 setTimeout
+   * 用于串行控制歌词行的切换节奏
+   */
+  private delayNext(delay: number) {
+    return new Promise(resolve => {
+      if (this.timer) clearTimeout(this.timer);
+
+      this.timer = Number(
+        setTimeout(() => {
+          this.timer = 0;
+          resolve(null);
+        }, delay),
+      );
+    });
   }
 }
 
