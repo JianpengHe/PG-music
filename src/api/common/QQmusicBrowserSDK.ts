@@ -1,5 +1,6 @@
 import { encodeLyricToken } from "./lyricConvert";
 import lyricDecoder from "./lyricDecoder";
+import { QQmusicFetch } from "./QQmusicFetch";
 import QQmusicSign from "./QQmusicSign";
 
 type IQQmusicRequest = {
@@ -61,7 +62,7 @@ class QQmusicRequest {
     // this.clearServerQueue();
     this.needClear = false;
   }
-  private markRequest(requestsArray: IQQmusicRequest[], request: (reqBody: string, sign: string) => Promise<any>) {
+  private async markRequest(requestsArray: IQQmusicRequest[], request: (reqBody: string) => Promise<any>) {
     const requestData = JSON.stringify(
       requestsArray.reduce(
         (accumulator, currentRequest, index) => {
@@ -71,19 +72,23 @@ class QQmusicRequest {
         {
           // 通用请求参数
           comm: {
+            cv: 4747474,
+            ct: 24,
             format: "json",
             inCharset: "utf-8",
             outCharset: "utf-8",
             notice: 0,
             platform: "yqq.json",
             needNewCode: 1,
-            uin: "1",
+            uin: 1,
+            g_tk_new_20200303: 5381,
+            g_tk: 5381,
           },
         },
       ),
     );
 
-    request(requestData, QQmusicSign(requestData))
+    request(requestData)
       .then(response => {
         // 处理响应数据
         for (let i = 0; i < requestsArray.length; i++) requestsArray[i].callback(response[`req_${i}`]);
@@ -104,13 +109,13 @@ class QQmusicRequest {
 
     this.markRequest(
       requestsArray,
-      (reqBody, sign) =>
+      reqBody =>
         new Promise((resolve, reject) => {
           // 创建JSONP脚本元素
           const jsonpScript = document.createElement("script");
           const url = new URL(this.QQserverUrl, window.location.href);
           url.searchParams.append("_", new Date().getTime().toString());
-          url.searchParams.append("sign", sign);
+          url.searchParams.append("sign", QQmusicSign(reqBody));
           url.searchParams.append("data", reqBody);
           url.searchParams.append("format", "jsonp");
           url.searchParams.append("inCharset", "utf8");
@@ -146,9 +151,7 @@ class QQmusicRequest {
     if (this.cdnRequestQueue.length === 0) return;
     const requestsArray = [...this.cdnRequestQueue];
     this.cdnRequestQueue.length = 0;
-    this.markRequest(requestsArray, async (reqBody, sign) =>
-      fetch(this.cdnUrl + "?sign=" + sign, { method: "POST", body: reqBody }).then(res => res.json()),
-    );
+    this.markRequest(requestsArray, reqBody => QQmusicFetch(reqBody, this.cdnUrl));
   }
 }
 
@@ -200,12 +203,16 @@ export class QQmusicBrowserSDK extends QQmusicRequest {
   }
 
   public async search(keyword: string, pageNum: number = 1, numPerPage: number = 10, searchType: number = 0) {
-    const { code, data } = await this.requestCdn("DoSearchForQQMusicDesktop", "music.search.SearchCgiService", {
-      num_per_page: numPerPage,
-      page_num: pageNum,
-      query: keyword,
-      search_type: searchType,
-    });
+    const { code, data } = await (
+      await fetch(`https://tool.hejianpeng.cn/music/api/search/${pageNum}/${keyword}`)
+    ).json();
+    // await this.requestCdn("DoSearchForQQMusicDesktop", "music.search.SearchCgiService", {
+    //   num_per_page: numPerPage,
+    //   page_num: pageNum,
+    //   query: keyword,
+    //   search_type: searchType,
+    //   searchid: String(Math.random()).substring(2),
+    // });
     if (code !== 0) throw new Error("搜索失败");
     return { ...data.body, sum: data.meta.sum } as {
       song: {

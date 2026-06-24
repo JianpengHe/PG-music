@@ -49,7 +49,7 @@ https
         agent: keepAliveAgent,
       },
       res2 => {
-        res2.on("error", () => {});
+        res2.on("error", () => { });
         res.writeHead(res2.statusCode, res2.headers);
         res2.pipe(res);
       },
@@ -60,9 +60,9 @@ https
     //   console.log(String(d));
     // });
     req.pipe(req2);
-    req.on("error", () => {});
-    res.on("error", () => {});
-    req2.on("error", () => {});
+    req.on("error", () => { });
+    res.on("error", () => { });
+    req2.on("error", () => { });
   })
   .listen(443, "127.0.0.6");
 const getSongVkey = (songmid, filename, cb) =>
@@ -99,8 +99,8 @@ const setControlHeader = (res, time) => {
 };
 https
   .createServer(options, (req, res) => {
-    req.on("error", () => {});
-    res.on("error", () => {});
+    req.on("error", () => { });
+    res.on("error", () => { });
     res.setHeader("content-type", "application/json; charset=utf-8");
     const { pathname, searchParams } = new URL("http://127.0.0.1" + req.url);
     let regExp = null;
@@ -115,6 +115,28 @@ https
         res.end(JSON.stringify(d));
       });
       return;
+    }
+    if ((regExp = pathname.match(/^\/search\/(\d+)\/([\d\D]+?)$/i))) {
+      const [_, page_num, query] = regExp;
+      console.log(new Date().toLocaleString(), "DoSearchForQQMusicDesktop", page_num, decodeURIComponent(query));
+      getQQmusicData(
+        {
+          method: 'DoSearchForQQMusicDesktop',
+          module: 'music.search.SearchCgiService',
+          param: {
+            searchid: String(Math.random()).substring(2),
+            search_type: 0,
+            query: decodeURIComponent(query),
+            page_num: Number(page_num),
+            num_per_page: 10
+          }
+        },
+        (data) =>
+          res.end(JSON.stringify(data))
+
+        , true
+      );
+      return
     }
 
     if ((regExp = pathname.match(/^\/play\/([a-z\d\.]+?)\.vkey$/i))) {
