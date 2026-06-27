@@ -3,14 +3,20 @@ import QQmusicSignV3 from "./QQmusicSignV3";
 import { uint8Array8ToBase64 } from "./utils";
 
 export async function QQmusicFetch(reqBody: string, host = "https://u6.y.qq.com/cgi-bin/musics.fcg") {
-  const url = `${host}?_=${new Date().getTime()}&encoding=ag-1&sign=${await QQmusicSignV3(reqBody)}`;
-  const body = uint8Array8ToBase64(await encodeAG1Request(reqBody));
+  const url = new URL(host);
+
+  if (host.includes("musics.fcg")) {
+    url.searchParams.append("_", new Date().getTime().toString());
+    url.searchParams.append("encoding", "ag-1");
+    url.searchParams.append("sign", await QQmusicSignV3(reqBody));
+    reqBody = uint8Array8ToBase64(await encodeAG1Request(reqBody));
+  }
+
   // console.log(url, body);
   const response = await fetch(url, {
     method: "POST",
-    body,
+    body: reqBody,
     headers: {
-      accept: "application/octet-stream",
       // "accept-language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
       "content-type": "text/plain",
       // cookie:
@@ -19,9 +25,10 @@ export async function QQmusicFetch(reqBody: string, host = "https://u6.y.qq.com/
     },
   });
 
-  const data = response.headers.get("content-type")?.includes("json")
-    ? await response.json()
-    : JSON.parse(decodeAG1Response(new Uint8Array(await response.arrayBuffer())));
-  // console.log(data);
+  const data =
+    url.searchParams.get("encoding") === "ag-1"
+      ? JSON.parse(decodeAG1Response(new Uint8Array(await response.arrayBuffer())))
+      : await response.json();
+  console.log(data);
   return data;
 }

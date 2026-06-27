@@ -5,11 +5,11 @@ const order = Array(62)
   .map((_, i) => (i < 52 ? ((i % 26) + 10).toString(36) : String(i - 52)))
   .join("");
 
-if (!globalThis["window"]) {
-  //@ts-ignore
-  const crypto = __non_webpack_require__("crypto");
-  globalThis["$MD5"] = (str: string) => crypto.createHash("md5").update(str).digest("hex");
-}
+// if (!globalThis["window"]) {
+//   //@ts-ignore
+//   const crypto = __non_webpack_require__("crypto");
+//   globalThis["$MD5"] = (str: string) => crypto.createHash("md5").update(str).digest("hex");
+// }
 
 const getArrIndex = (str: string | number[], indexArr: number[]) => indexArr.map(index => str[index] || "").join("");
 const midKey = (hash: string) => {
@@ -29,8 +29,20 @@ const midKey = (hash: string) => {
   key3.push((key2[i * 3] & 3) << 4);
   return getArrIndex(order, key3);
 };
-
-export default (str: string) => {
+export const loadMD5 = async () => {
+  // @ts-ignore
+  if (!globalThis["$MD5"]) {
+    const md5Script = document.createElement("script");
+    md5Script.src = "https://tool.hejianpeng.cn/js/md5.js";
+    document.head.appendChild(md5Script);
+    await new Promise((resolve, reject) => {
+      md5Script.onload = resolve;
+      md5Script.onerror = reject;
+    });
+  }
+};
+export const QQmusicSign = (str: string) => {
+  // @ts-ignore
   const hash = globalThis["$MD5"](str).toLowerCase();
   return "zzb" + getArrIndex(hash, key.slice(0, 8)) + midKey(hash) + getArrIndex(hash, key.slice(24));
 };

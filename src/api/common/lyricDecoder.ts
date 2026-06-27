@@ -468,7 +468,7 @@ function Ddes(data: Uint8Array, key: Uint8Array): void {
  * @param hexString 十六进制字符串形式的加密歌词数据
  * @returns 解码后的原始数据（通常需要进一步用zlib解压缩）
  */
-export default function (hexString: string): Uint8Array {
+export function lyricDecoder(hexString: string): Uint8Array {
   // 第一步：将十六进制字符串转换为字节数组
   const data = new Uint8Array(Math.ceil(hexString.length / 2));
   for (let i = 0; i < data.length; i++) {
