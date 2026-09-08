@@ -28,10 +28,10 @@ const { curSong, list } = defineProps<SongListProps>();
         <h4>{{ item.singer }}</h4>
       </div>
       <div class="song-item-icons">
-        <Entertainment size="24" />
-        <AddMusic size="24" />
-        <Pause v-if="item.id === curSong?.id && isPlaying" size="24" @click="play(item)" />
-        <PlayOne v-else size="24" @click="play(item)" />
+        <Entertainment size="20" />
+        <AddMusic size="20" />
+        <Pause v-if="item.id === curSong?.id && isPlaying" size="20" @click="play(item)" />
+        <PlayOne v-else size="20" @click="play(item)" />
       </div>
     </div>
   </div>
@@ -39,7 +39,7 @@ const { curSong, list } = defineProps<SongListProps>();
 <style scoped>
 .song-list {
   position: relative;
-  background-color: #fff;
+  background-color: var(--color-surface);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -71,12 +71,13 @@ const { curSong, list } = defineProps<SongListProps>();
   font-size: 16px;
   line-height: 24px;
   font-weight: 500;
+  color: var(--color-text-primary);
 }
 .song-item-info > h4 {
   font-size: 14px;
   line-height: 16px;
   font-weight: 300;
-  color: #888;
+  color: var(--color-text-secondary);
 }
 h3,
 h4 {

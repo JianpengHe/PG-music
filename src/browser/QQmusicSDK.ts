@@ -12,7 +12,8 @@ audio.loop = true;
 audio.crossOrigin = "anonymous";
 document.body.appendChild(audio);
 export const audioPlus = new AudioPlus(audio);
-// window.audioPlus = audioPlus;
+// @ts-ignore
+window.audioPlus = audioPlus;
 
 export const lyricShow = new LyricShow(
   str => {

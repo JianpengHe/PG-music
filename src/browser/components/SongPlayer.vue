@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref } from "vue";
 import type { ISong } from "./types";
 import { PlayOne, Pause } from "@icon-park/vue-next";
 import { useAudioPlayState } from "../hooks/useAudioPlayState";
@@ -41,12 +40,12 @@ const { curSong: item } = defineProps<SongListProps>();
   transform: translate(-50%, 120%);
   border-radius: 24px;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: space-between;
   gap: 12px;
   padding: 16px;
   box-sizing: border-box;
-  box-shadow: 0px 0px 12px 1px rgba(0, 0, 0, 0.3);
+  box-shadow: 0px 0px 12px 1px var(--color-shadow);
   width: calc(100vmin - 24px);
   backdrop-filter: blur(12px);
 }
@@ -70,17 +69,19 @@ const { curSong: item } = defineProps<SongListProps>();
   align-items: flex-start;
   justify-content: space-between;
   gap: 4px;
+  padding: 2px 0;
 }
 .song-item-info > h3 {
   font-size: 16px;
-  line-height: 24px;
+  line-height: 16px;
   font-weight: 500;
+  color: var(--color-text-primary);
 }
 .song-item-info > h4 {
   font-size: 14px;
-  line-height: 16px;
+  line-height: 14px;
   font-weight: 300;
-  color: #888;
+  color: var(--color-text-secondary);
 }
 h3,
 h4 {
@@ -109,10 +110,10 @@ h4 {
 }
 
 :global(#lyric span) {
-  -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
-  background-color: rgba(150, 150, 150, 1);
-  background-image: linear-gradient(#01e5ff, #01e5ff);
+  background-color: var(--color-text-tertiary);
+  background-image: linear-gradient(var(--color-primary), var(--color-primary));
   background-repeat: no-repeat;
   background-size: 0%;
   animation-fill-mode: forwards;

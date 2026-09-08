@@ -3,7 +3,7 @@
 	"tasks": [
 		{
 			"type": "npm",
-			"script": "watch",
+			"script": "dev",
 			"group": "build",
 			"problemMatcher": [],
 			"label": "npm: watch",

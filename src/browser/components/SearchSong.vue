@@ -94,20 +94,26 @@ function debouncedFn(callback: () => Promise<void>, minDelay = 500) {
 </template>
 <style scoped>
 form {
-  position: relative;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
   height: 32px;
   padding: 8px;
-  background-color: #ededed;
+  background-color: var(--color-bg-secondary);
   font-size: 14px;
 }
+
 .search-box {
   width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
   border-radius: 4px;
-  background-color: #fff;
+  background-color: var(--color-surface);
+  z-index: 9999;
+  position: relative;
 }
+
 button {
   border: none;
   outline: none;
@@ -115,29 +121,38 @@ button {
   background-color: transparent;
   padding: 0;
 }
+
 input {
   flex: 1;
   border: none;
   outline: none;
   height: 32px;
+  background-color: transparent;
+  color: var(--color-text-primary);
 }
+
 .i-icon {
   padding: 8px;
   width: 16px;
   height: 16px;
-  color: rgba(0, 0, 0, 0.5);
-  cursor: pointer;
 }
+
 .i-icon-search {
   padding-right: 2px;
 }
 
+.smart-tips {
+  box-shadow: 0 0 12px 1px var(--color-shadow);
+  backdrop-filter: blur(24px);
+}
+
 .smart-tips > div {
-  border-top: 1px solid #ededed;
+  border-top: 1px solid var(--color-border);
   border-radius: 4px;
   padding: 8px;
   line-height: 24px;
-  background-color: #fff;
   cursor: pointer;
+  background-color: var(--color-overlay);
+  color: var(--color-text-primary);
 }
 </style>
