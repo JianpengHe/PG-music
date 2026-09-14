@@ -1,0 +1,52 @@
+<script setup lang="ts">
+import type { ISong } from "../types";
+import { PlayOne, Pause, Entertainment, AddMusic } from "@icon-park/vue-next";
+import { usePlaySongInfo } from "../hooks/usePlaySongInfo";
+import { myEvent } from "../event";
+import { formatLyricLine } from "../../api/common/lyricConvert";
+import { QQmusicSDK } from "../QQmusicSDK";
+import { player } from "../player";
+
+const { songInfo } = usePlaySongInfo();
+</script>
+<template>
+  <div class="song-detail">
+    <div class="song-detail-mask"></div>
+    <img class="song-detail-pic-bg" :src="songInfo.pic" alt="" />
+  </div>
+</template>
+<style scoped>
+.song-detail {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.song-detail-pic-bg {
+  position: absolute;
+  width: 100vmax;
+  height: 100vmax;
+  margin: -50vmax;
+  left: 50%;
+  top: 50%;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-filter: blur(2vmax);
+  filter: blur(2vmax);
+  z-index: -2;
+  transform: scale(1.1);
+}
+.song-detail-mask {
+  position: absolute;
+  width: 100vmax;
+  height: 100vmax;
+  margin: -50vmax;
+  left: 50%;
+  top: 50%;
+  background-color: #000;
+  opacity: 0.2;
+  z-index: -1;
+}
+</style>

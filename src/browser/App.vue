@@ -45,6 +45,7 @@ import Home from "./Home.vue";
   min-height: 100vh;
   flex-direction: column;
   align-items: center;
+  overflow: hidden;
 }
 
 :global(span.i-icon) {

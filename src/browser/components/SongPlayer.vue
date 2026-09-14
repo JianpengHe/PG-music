@@ -4,12 +4,16 @@ import { usePlaySongInfo } from "../hooks/usePlaySongInfo";
 import { player } from "../player";
 
 const { songInfo } = usePlaySongInfo();
+const { setSongDetailPage } = defineProps<{
+  setSongDetailPage: (e: any) => void;
+}>();
 </script>
 <template>
   <div
     class="song-item"
     :class="{ musicPlaying: songInfo.isPlaying }"
     :style="songInfo.id ? 'transform: translate(-50%, 0)' : ''"
+    @click="setSongDetailPage"
   >
     <img :src="songInfo.pic" alt="" />
     <div class="song-item-info">
@@ -17,8 +21,8 @@ const { songInfo } = usePlaySongInfo();
       <h4 id="lyric"></h4>
     </div>
     <div class="song-item-icons">
-      <Pause v-if="songInfo.isPlaying" size="36" @click="player.playOrPause()" />
-      <PlayOne v-else size="36" @click="player.playOrPause()" />
+      <Pause v-if="songInfo.isPlaying" size="36" @click.stop="player.playOrPause()" />
+      <PlayOne v-else size="36" @click.stop="player.playOrPause()" />
     </div>
   </div>
 </template>
@@ -39,6 +43,7 @@ const { songInfo } = usePlaySongInfo();
   box-shadow: 0px 0px 12px 1px var(--color-shadow);
   width: calc(100vmin - 24px);
   backdrop-filter: blur(12px);
+  z-index: 10000;
 }
 .song-item > img {
   width: 48px;

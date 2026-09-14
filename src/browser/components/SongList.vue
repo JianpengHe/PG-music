@@ -10,10 +10,6 @@ import { player } from "../player";
 export type SongListProps = {
   list: ISong[];
 };
-export type SongListEmits = {
-  (e: "play", value: ISong): void;
-};
-const emit = defineEmits<SongListEmits>();
 
 const { songInfo } = usePlaySongInfo();
 const setSong = async (item: ISong) => {
@@ -21,7 +17,6 @@ const setSong = async (item: ISong) => {
     QQmusicSDK.playURL(item.mid, `C400${item.media_mid}.m4a`),
     QQmusicSDK.lyric(item.id),
   ]);
-  console.log(lyric, src);
   myEvent.emit("setSong", { ...item, src, lyric: formatLyricLine(lyric, 5) });
 };
 
