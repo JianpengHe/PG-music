@@ -1,6 +1,13 @@
 import { encodeLyricToken } from "./common/lyricConvert";
 import { lyricDecoder } from "./common/lyricDecoder";
-import { inflateUint8Array, isServer, jsonpFetch, QQserverUrlSmartbox } from "./common/utils";
+import {
+  base64ToUint8Array,
+  inflateUint8Array,
+  isServer,
+  jsonpFetch,
+  QQserverUrlSmartbox,
+  uint8ArrayToString,
+} from "./common/utils";
 
 export class QQmusicAPI {
   constructor(protected readonly serverUrl: string) {}
@@ -44,7 +51,12 @@ export class QQmusicAPI {
     });
     if (code !== 0) throw new Error("获取歌词失败");
     try {
-      return encodeLyricToken(await inflateUint8Array(lyricDecoder(data.lyric)), []);
+      const raw = data.qrc
+        ? await inflateUint8Array(lyricDecoder(data.lyric))
+        : uint8ArrayToString(base64ToUint8Array(data.lyric));
+      // TODO： 支持 LRC 格式歌词
+      if (!data.qrc) console.log("暂不支持 LRC 格式歌词");
+      return encodeLyricToken(raw, []);
     } catch (error: unknown) {
       console.error("处理歌词数据时出错:", error);
       return [];
