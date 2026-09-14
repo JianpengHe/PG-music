@@ -495,8 +495,10 @@ export class LyricShow {
 
   /* ======================= 歌词加载 ======================= */
 
-  public loadLyric(lines: LyricToken[][], duration: number) {
-    this.lyricLines = lines;
+  public loadLyric(lines: LyricToken[][]) {
+    this.lyricLines = lines.length
+      ? [...lines]
+      : [[{ timeGap: 0, absoluteTime: 0, duration: 0, text: "【暂无歌词】" }]];
     this.lineShowTimeList.length = 0;
 
     /**
@@ -508,7 +510,7 @@ export class LyricShow {
      * - 第 0 行不会在这里生成时间
      * - 真正使用的是「下一行 > 当前时间」的判定方式
      */
-    lines.reduce((prevLine, currentLine) => {
+    this.lyricLines.reduce((prevLine, currentLine) => {
       const prevLastToken = prevLine[prevLine.length - 1];
 
       const prevLineEndTime = prevLastToken.absoluteTime + prevLastToken.duration;
@@ -526,7 +528,7 @@ export class LyricShow {
      * 末尾追加一个哨兵时间
      * 确保 findIndex 永远能命中
      */
-    this.lineShowTimeList.push(duration * 1000 + 10);
+    this.lineShowTimeList.push(Infinity);
 
     this.currentLineIndex = -1;
     this.play();
@@ -595,7 +597,7 @@ export class LyricShow {
   private delayNext(delay: number) {
     return new Promise(resolve => {
       if (this.timer) clearTimeout(this.timer);
-
+      if (delay === Infinity || delay < 0) return;
       this.timer = Number(
         setTimeout(() => {
           this.timer = 0;

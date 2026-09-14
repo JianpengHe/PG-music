@@ -1,33 +1,24 @@
 <script setup lang="ts">
-import type { ISong } from "./types";
 import { PlayOne, Pause } from "@icon-park/vue-next";
-import { useAudioPlayState } from "../hooks/useAudioPlayState";
-export type SongListProps = {
-  curSong: ISong;
-};
-export type SongListEmits = {
-  (e: "play", value: ISong): void;
-};
-const emit = defineEmits<SongListEmits>();
+import { usePlaySongInfo } from "../hooks/usePlaySongInfo";
+import { player } from "../player";
 
-const { isPlaying } = useAudioPlayState();
-const play = (item: ISong) => {
-  console.log(item);
-  emit("play", item);
-};
-
-const { curSong: item } = defineProps<SongListProps>();
+const { songInfo } = usePlaySongInfo();
 </script>
 <template>
-  <div class="song-item" :class="{ musicPlaying: isPlaying }" :style="item.id ? 'transform: translate(-50%, 0)' : ''">
-    <img :src="item.pic" alt="" />
+  <div
+    class="song-item"
+    :class="{ musicPlaying: songInfo.isPlaying }"
+    :style="songInfo.id ? 'transform: translate(-50%, 0)' : ''"
+  >
+    <img :src="songInfo.pic" alt="" />
     <div class="song-item-info">
-      <h3>{{ item.name }} - {{ item.singer }}</h3>
+      <h3>{{ songInfo.name }} - {{ songInfo.singer }}</h3>
       <h4 id="lyric"></h4>
     </div>
     <div class="song-item-icons">
-      <Pause v-if="isPlaying" size="36" @click="play(item)" />
-      <PlayOne v-else size="36" @click="play(item)" />
+      <Pause v-if="songInfo.isPlaying" size="36" @click="player.playOrPause()" />
+      <PlayOne v-else size="36" @click="player.playOrPause()" />
     </div>
   </div>
 </template>
@@ -80,7 +71,7 @@ const { curSong: item } = defineProps<SongListProps>();
 .song-item-info > h4 {
   font-size: 14px;
   line-height: 14px;
-  font-weight: 300;
+  font-weight: 450;
   color: var(--color-text-secondary);
 }
 h3,

@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import type { ISong } from "./types";
+import type { ISong } from "../types";
 import { PlayOne, Pause, Entertainment, AddMusic } from "@icon-park/vue-next";
-import { useAudioPlayState } from "../hooks/useAudioPlayState";
+import { usePlaySongInfo } from "../hooks/usePlaySongInfo";
+import { myEvent } from "../event";
+import { formatLyricLine } from "../../api/common/lyricConvert";
+import { QQmusicSDK } from "../QQmusicSDK";
+import { player } from "../player";
+
 export type SongListProps = {
-  curSong: ISong;
   list: ISong[];
 };
 export type SongListEmits = {
@@ -11,13 +15,17 @@ export type SongListEmits = {
 };
 const emit = defineEmits<SongListEmits>();
 
-const { isPlaying } = useAudioPlayState();
-const play = (item: ISong) => {
-  console.log(item);
-  emit("play", item);
+const { songInfo } = usePlaySongInfo();
+const setSong = async (item: ISong) => {
+  const [src, lyric] = await Promise.all([
+    QQmusicSDK.playURL(item.mid, `C400${item.media_mid}.m4a`),
+    QQmusicSDK.lyric(item.id),
+  ]);
+  console.log(lyric, src);
+  myEvent.emit("setSong", { ...item, src, lyric: formatLyricLine(lyric, 5) });
 };
 
-const { curSong, list } = defineProps<SongListProps>();
+const { list } = defineProps<SongListProps>();
 </script>
 <template>
   <div class="song-list">
@@ -30,8 +38,8 @@ const { curSong, list } = defineProps<SongListProps>();
       <div class="song-item-icons">
         <Entertainment size="20" />
         <AddMusic size="20" />
-        <Pause v-if="item.id === curSong?.id && isPlaying" size="20" @click="play(item)" />
-        <PlayOne v-else size="20" @click="play(item)" />
+        <Pause v-if="item.id === songInfo.id && songInfo.isPlaying" size="20" @click="player.playOrPause()" />
+        <PlayOne v-else size="20" @click="setSong(item)" />
       </div>
     </div>
   </div>
