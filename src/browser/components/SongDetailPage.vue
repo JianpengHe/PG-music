@@ -11,16 +11,20 @@ export type SongDetailPageProps = {
 const { x, y, setSongDetailPage } = defineProps<SongDetailPageProps>();
 </script>
 <template>
-  <div
-    v-if="x && y"
-    :style="{
-      transform: `translate3d(${x}px, ${y}px, 0) scale(0)`,
-    }"
-    class="song-detail-page"
-  >
-    <Back theme="outline" size="24" class="back-icon" @click="setSongDetailPage()" />
-    <SongDetail />
-  </div>
+  <Transition name="song-detail-page">
+    <div
+      v-if="x && y"
+      :style="{
+        '--start-x': `${x}px`,
+        '--start-y': `${y}px`,
+      }"
+      class="song-detail-page"
+    >
+      <Back theme="outline" size="24" class="back-icon" @click="setSongDetailPage()" />
+
+      <SongDetail />
+    </div>
+  </Transition>
 </template>
 <style scoped>
 .back-icon.i-icon {
@@ -39,15 +43,41 @@ const { x, y, setSongDetailPage } = defineProps<SongDetailPageProps>();
   left: 0;
   width: 100vw;
   height: 100vh;
-  animation: songDetailPage 0.3s ease-in-out forwards;
-  opacity: 0;
   z-index: 9999;
   overflow: hidden;
 }
-@keyframes songDetailPage {
-  100% {
+
+/* 进入 */
+.song-detail-page-enter-active {
+  animation: songDetailPageEnter 0.3s ease-in-out;
+}
+
+/* 退出 */
+.song-detail-page-leave-active {
+  animation: songDetailPageLeave 0.3s ease-in-out;
+}
+
+@keyframes songDetailPageEnter {
+  from {
+    opacity: 0;
+    transform: translate3d(var(--start-x), var(--start-y), 0) scale(0);
+  }
+
+  to {
     opacity: 1;
     transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes songDetailPageLeave {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translate3d(var(--start-x), var(--start-y), 0) scale(0);
   }
 }
 </style>
