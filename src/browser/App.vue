@@ -45,11 +45,56 @@ import Home from "./Home.vue";
   min-height: 100vh;
   flex-direction: column;
   align-items: center;
-  overflow: hidden;
 }
 
 :global(span.i-icon) {
   color: var(--color-text-secondary);
   cursor: pointer;
+}
+
+:global(.lyric) {
+  /* position: fixed;
+  width: 100%; */
+  height: 16px;
+  /* bottom: 4vmin; */
+  /* z-index: 999999; */
+  pointer-events: none;
+  text-align: center;
+  /* font-size: 18px; */
+  /* line-height: 50px; */
+  /* opacity: 0;
+    transition: opacity 0.5s; */
+  /* left: 0; */
+  white-space: nowrap;
+}
+
+:global(.lyric span) {
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-color: var(--color-text-tertiary);
+  background-image: linear-gradient(var(--color-primary), var(--color-primary));
+  background-repeat: no-repeat;
+  background-size: 0%;
+  animation-fill-mode: forwards;
+  animation-timing-function: linear;
+  animation-iteration-count: 1;
+  animation-delay: 0s;
+  animation-direction: normal;
+  animation-name: lyric;
+  animation-play-state: paused;
+}
+
+:global(.musicPlaying .lyric span) {
+  animation-play-state: running;
+}
+
+@keyframes lyric {
+  0% {
+    background-size: 0%;
+  }
+
+  100% {
+    background-size: 100%;
+  }
 }
 </style>

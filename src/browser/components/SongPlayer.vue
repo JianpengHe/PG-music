@@ -2,23 +2,43 @@
 import { PlayOne, Pause } from "@icon-park/vue-next";
 import { usePlaySongInfo } from "../hooks/usePlaySongInfo";
 import { player } from "../player";
+import { onMounted, onUnmounted, ref } from "vue";
+import { myEvent } from "../event";
+import { LyricShow } from "../../api/common/lyricConvert";
 
 const { songInfo } = usePlaySongInfo();
-const { setSongDetailPage } = defineProps<{
+const { x, y, setSongDetailPage } = defineProps<{
+  x: number;
+  y: number;
   setSongDetailPage: (e: any) => void;
 }>();
+
+const lyric = ref<LyricShow["lyricData"]>(player.lyricShow.lyricData);
+function changeLyric() {
+  if (x && y) return;
+  lyric.value = player.lyricShow.lyricData;
+}
+onUnmounted(() => myEvent.off("changeLyric", changeLyric));
+onMounted(() => myEvent.on("changeLyric", changeLyric));
 </script>
 <template>
   <div
     class="song-item"
     :class="{ musicPlaying: songInfo.isPlaying }"
-    :style="songInfo.id ? 'transform: translate(-50%, 0)' : ''"
+    :style="!!songInfo.id && !x && !y ? 'transform: translate(-50%, 0)' : 'transform: translate(-50%, 120%)'"
     @click="setSongDetailPage"
   >
     <img :src="songInfo.pic" alt="" />
     <div class="song-item-info">
       <h3>{{ songInfo.name }} - {{ songInfo.singer }}</h3>
-      <h4 id="lyric"></h4>
+      <h4 class="lyric">
+        <span
+          v-for="ch in lyric.data"
+          :style="{ animationDelay: `${ch.delay}ms`, animationDuration: `${ch.duration}ms` }"
+          :key="ch.text + ch.delay + ch.duration"
+          >{{ ch.text }}</span
+        >
+      </h4>
     </div>
     <div class="song-item-icons">
       <Pause v-if="songInfo.isPlaying" size="36" @click.stop="player.playOrPause()" />
@@ -32,7 +52,6 @@ const { setSongDetailPage } = defineProps<{
   bottom: 12px;
   left: 50%;
   transition: transform 0.3s ease-in-out;
-  transform: translate(-50%, 120%);
   border-radius: 24px;
   display: flex;
   align-items: stretch;
@@ -43,6 +62,7 @@ const { setSongDetailPage } = defineProps<{
   box-shadow: 0px 0px 12px 1px var(--color-shadow);
   width: calc(100vmin - 24px);
   backdrop-filter: blur(12px);
+  background-color: rgba(247, 248, 252, 0.66);
   z-index: 10000;
 }
 .song-item > img {
@@ -89,51 +109,7 @@ h4 {
   gap: 8px;
   cursor: pointer;
 }
-:global(#lyric) {
-  /* position: fixed;
-  width: 100%; */
-  height: 16px;
-  /* bottom: 4vmin; */
-  /* z-index: 999999; */
-  pointer-events: none;
-  text-align: center;
-  /* font-size: 18px; */
-  /* line-height: 50px; */
-  /* opacity: 0;
-    transition: opacity 0.5s; */
-  /* left: 0; */
-  white-space: nowrap;
-}
 
-:global(#lyric span) {
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-color: var(--color-text-tertiary);
-  background-image: linear-gradient(var(--color-primary), var(--color-primary));
-  background-repeat: no-repeat;
-  background-size: 0%;
-  animation-fill-mode: forwards;
-  animation-timing-function: linear;
-  animation-iteration-count: 1;
-  animation-delay: 0s;
-  animation-direction: normal;
-  animation-name: lyric;
-  animation-play-state: paused;
-}
-
-:global(.musicPlaying #lyric span) {
-  animation-play-state: running;
-}
-
-@keyframes lyric {
-  0% {
-    background-size: 0%;
-  }
-
-  100% {
-    background-size: 100%;
-  }
-}
 @keyframes rotateImg {
   0% {
     transform: rotate(0deg);

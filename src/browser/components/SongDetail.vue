@@ -6,6 +6,7 @@ import { myEvent } from "../event";
 import { formatLyricLine } from "../../api/common/lyricConvert";
 import { QQmusicSDK } from "../QQmusicSDK";
 import { player } from "../player";
+import SongDetailLyric from "./SongDetailLyric.vue";
 
 const { songInfo } = usePlaySongInfo();
 </script>
@@ -13,6 +14,11 @@ const { songInfo } = usePlaySongInfo();
   <div class="song-detail">
     <div class="song-detail-mask"></div>
     <img class="song-detail-pic-bg" :src="songInfo.pic" alt="" />
+    <div class="song-detail-content">
+      <div class="song-detail-name">{{ songInfo.name }}</div>
+      <div class="song-detail-singer">{{ songInfo.singer }}</div>
+      <SongDetailLyric />
+    </div>
   </div>
 </template>
 <style scoped>
@@ -23,6 +29,7 @@ const { songInfo } = usePlaySongInfo();
   display: flex;
   flex-direction: column;
   align-items: center;
+  color: var(--color-border);
 }
 .song-detail-pic-bg {
   position: absolute;
@@ -48,5 +55,13 @@ const { songInfo } = usePlaySongInfo();
   background-color: #000;
   opacity: 0.2;
   z-index: -1;
+}
+.song-detail-content {
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 </style>

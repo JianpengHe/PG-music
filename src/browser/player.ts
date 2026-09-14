@@ -9,12 +9,9 @@ class Player {
   public get currentSong() {
     return this.songList.get(this.currentSongId);
   }
-  private readonly lyricShow = new LyricShow(
-    str => {
-      const lyric = document.getElementById("lyric") as HTMLElement;
-      if (lyric) lyric.innerHTML = str;
-    },
-    () => (this.audio.paused ? -1 : this.audio.currentTime),
+  public readonly lyricShow = new LyricShow(
+    () => myEvent.emit("changeLyric", undefined),
+    () => ({ currentTime: this.audio.currentTime, paused: !this.isPlaying }),
   );
   private readonly audio: HTMLAudioElement = document.createElement("audio");
   private readonly audioPlus = new AudioPlus(this.audio);
@@ -28,7 +25,7 @@ class Player {
       this.audio.play();
     });
     this.audio.addEventListener("play", () => {
-      this.lyricShow.play();
+      myEvent.emit("changeLyric", undefined);
       myEvent.emit("playSong", { id: player.currentSongId, start: this.audio.currentTime });
     });
     this.audio.addEventListener("pause", e => {
@@ -41,7 +38,7 @@ class Player {
       this.audio.play();
     });
     this.audio.addEventListener("seeked", () => {
-      this.lyricShow.play();
+      myEvent.emit("changeLyric", undefined);
     });
     myEvent.on("setSong", ({ detail }) => {
       this.audio.pause();

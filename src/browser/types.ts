@@ -16,6 +16,7 @@ export type IEventList = {
   setSong: ISongInfo;
   playSong: Pick<IEventList["setSong"], "id" | "start">;
   pauseSong: { reason: "user" | "end" | "load" };
+  changeLyric: void;
 };
 
 type EventMap = {

@@ -475,21 +475,19 @@ export class LyricShow {
   private readonly lineShowTimeList: number[] = [];
 
   /** 当前正在显示的歌词行索引 */
-  private currentLineIndex = -1;
+  // private currentLineIndex = -1;
 
   /** 当前用于歌词调度的唯一计时器 */
   private timer = 0;
 
   constructor(
     /** 歌词行切换时的回调（返回拼好的 HTML） */
-    private readonly onLyricLineChange: (html: string, index: number) => void,
-    /** 获取当前音频播放时间（秒） */
-    private readonly getOffsetTime: () => number,
+    private readonly onLyricLineChange: () => void,
+    /** 获取当前音频播放时间（秒）和是否暂停 */
+    private readonly getCurrentTimeAndPaused: () => { currentTime: number; paused: boolean },
   ) {
     document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") {
-        this.play();
-      }
+      if (document.visibilityState === "visible") this.onLyricLineChange();
     });
   }
 
@@ -530,57 +528,61 @@ export class LyricShow {
      */
     this.lineShowTimeList.push(Infinity);
 
-    this.currentLineIndex = -1;
-    this.play();
+    // this.currentLineIndex = -1;
+    this.onLyricLineChange();
 
     console.log(this.lineShowTimeList, this.lyricLines);
   }
 
   /* ======================= 主播放调度 ======================= */
 
-  public async play() {
-    if (!this.lyricLines.length) {
-      this.onLyricLineChange("", -1);
-      return;
+  public get lyricData(): {
+    data: Array<{ delay: number; duration: number; text: string; html: string }>;
+    lineIndex: number;
+  } {
+    const { currentTime, paused } = this.getCurrentTimeAndPaused();
+    // 当前音频播放时间（ms）
+    const currentTimeMs = currentTime * 1000;
+    if (currentTimeMs < 0 || !this.lyricLines.length) {
+      return { data: [], lineIndex: -1 };
     }
 
-    // 当前音频播放时间（ms）
-    const currentTimeMs = this.getOffsetTime() * 1000;
-    if (currentTimeMs < 0) {
-      this.pause();
-      return;
-    }
+    // return;
+    if (this.timer) clearTimeout(this.timer);
+    this.timer = 0;
     /**
      * 找到第一个「显示时间 > 当前时间」的行
      * 其索引即为当前应该展示的歌词行
      */
     const lineIndex = this.lineShowTimeList.findIndex(time => time >= currentTimeMs) || 0;
 
-    console.log("lineIndex", lineIndex, "sleep", this.lineShowTimeList[lineIndex] - currentTimeMs);
+    // console.log("lineIndex", lineIndex, "sleep", this.lineShowTimeList[lineIndex] - currentTimeMs);
 
-    this.currentLineIndex = lineIndex;
+    // this.currentLineIndex = lineIndex;
 
     /**
      * 构建当前行的歌词 HTML
      * animation-delay 使用 token 的绝对时间减去当前播放时间
      * 使动画与音频精确对齐
      */
-    const html = this.lyricLines[lineIndex]
-      .map(
-        ({ absoluteTime, duration, text }) =>
-          `<span style="animation-delay: ${absoluteTime - currentTimeMs - 10}ms;animation-duration: ${duration}ms;">${text}</span>`,
-      )
-      .join("");
-
-    this.onLyricLineChange(html, lineIndex);
+    const data = this.lyricLines[lineIndex].map(({ absoluteTime, duration, text }) => {
+      const delay = absoluteTime - currentTimeMs - 10;
+      return {
+        delay,
+        duration,
+        text,
+        html: `<span style="animation-delay: ${delay}ms;animation-duration: ${duration}ms;">${text}</span>`,
+      };
+    });
+    // this.onLyricLineChange(data, lineIndex);
 
     /**
      * 等待直到下一次歌词切换时间点
      * 再递归调用 play 进入下一行
      */
-    await this.delayNext(this.lineShowTimeList[lineIndex] - currentTimeMs + 5);
-
-    this.play();
+    if (!paused) this.delayNext(this.lineShowTimeList[lineIndex] - currentTimeMs + 5);
+    console.log(data);
+    return { data, lineIndex };
   }
 
   public pause() {
@@ -595,16 +597,14 @@ export class LyricShow {
    * 用于串行控制歌词行的切换节奏
    */
   private delayNext(delay: number) {
-    return new Promise(resolve => {
-      if (this.timer) clearTimeout(this.timer);
-      if (delay === Infinity || delay < 0) return;
-      this.timer = Number(
-        setTimeout(() => {
-          this.timer = 0;
-          resolve(null);
-        }, delay),
-      );
-    });
+    if (this.timer) clearTimeout(this.timer);
+    if (delay === Infinity || delay < 0) return;
+    this.timer = Number(
+      setTimeout(() => {
+        this.timer = 0;
+        this.onLyricLineChange();
+      }, delay),
+    );
   }
 }
 

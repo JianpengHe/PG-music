@@ -141,10 +141,7 @@ const submit = async (value: string) => {
   console.log(songList.value, JSON.stringify(songList.value));
 };
 
-const songDetailPage = ref({
-  x: 0,
-  y: 0,
-});
+const songDetailPage = ref({ x: 0, y: 0 });
 const setSongDetailPage = (e?: any) => {
   if (e) {
     songDetailPage.value = {
@@ -162,7 +159,7 @@ const setSongDetailPage = (e?: any) => {
     <h1>鹏飞音乐</h1>
     <SearchSong placeholder="搜索" :getSmartTips="getSmartTips" @submit="submit" />
     <SongList :list="songList" />
-    <SongPlayer :setSongDetailPage="setSongDetailPage" />
+    <SongPlayer :x="songDetailPage.x" :y="songDetailPage.y" :setSongDetailPage="setSongDetailPage" />
     <SongDetailPage :x="songDetailPage.x" :y="songDetailPage.y" :setSongDetailPage="setSongDetailPage" />
   </div>
 </template>
