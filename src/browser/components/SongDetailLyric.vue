@@ -36,6 +36,7 @@ onUnmounted(() => {
         v-if="lyric.lineIndex === index"
         v-for="ch in lyric.data"
         :style="{ animationDelay: `${ch.delay}ms`, animationDuration: `${ch.duration}ms` }"
+        :key="ch.html"
         >{{ ch.text }}</span
       >
       <span v-else v-for="ch in line" :key="ch.text + index">{{ ch.text }}</span>
@@ -43,8 +44,13 @@ onUnmounted(() => {
   </div>
 </template>
 <style scoped>
+.song-detail-lyric::after,
+.song-detail-lyric::before {
+  content: " ";
+  display: block;
+  height: 40vh;
+}
 .song-detail-lyric {
-  padding: 40vh 0;
   overflow: auto;
   flex: 1;
   min-height: 0;

@@ -35,7 +35,7 @@ onMounted(() => myEvent.on("changeLyric", changeLyric));
         <span
           v-for="ch in lyric.data"
           :style="{ animationDelay: `${ch.delay}ms`, animationDuration: `${ch.duration}ms` }"
-          :key="ch.text + ch.delay + ch.duration"
+          :key="ch.html"
           >{{ ch.text }}</span
         >
       </h4>
