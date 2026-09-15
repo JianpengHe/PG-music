@@ -64,6 +64,7 @@ onMounted(() => myEvent.on("changeLyric", changeLyric));
   backdrop-filter: blur(12px);
   background-color: rgba(247, 248, 252, 0.66);
   z-index: 10000;
+  cursor: pointer;
 }
 .song-item > img {
   width: 48px;
