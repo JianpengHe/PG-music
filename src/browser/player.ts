@@ -3,6 +3,11 @@ import { LyricShow } from "../api/common/lyricConvert";
 import type { ISongInfo } from "./types";
 import { myEvent } from "./event";
 
+const audioContext =
+  // @ts-ignore
+  window.audioContext || (window.audioContext = new AudioContext({ sampleRate: 48000 }));
+// window.addEventListener("click", () => audioContext.state === "suspended" && audioContext.resume(), true);
+
 class Player {
   public readonly songList: Map<ISongInfo["id"], ISongInfo & { isTemp?: boolean }> = new Map();
   private currentSongId: ISongInfo["id"] = 0;
@@ -13,15 +18,17 @@ class Player {
     () => myEvent.emit("changeLyric", undefined),
     () => ({ currentTime: this.audio.currentTime, paused: !this.isPlaying }),
   );
-  private readonly audio: HTMLVideoElement = document.createElement("video");
+  public readonly audio: HTMLVideoElement = document.createElement("video");
   // @ts-ignore
-  public readonly audioPlus = new AudioPlus(this.audio, window.audioContext);
+  public readonly audioPlus = new AudioPlus(this.audio, audioContext);
   constructor() {
     this.audio.style.cssText = `display: none;
     position: fixed;
     z-index: 99999;
     max-width: 100vw;
+    max-width: 100dvw;
     max-height: 100vh;
+    max-height: 100dvh;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);`;

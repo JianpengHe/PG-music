@@ -94,6 +94,7 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   max-width: 80vmin;
+  max-width: 80dvmin;
   width: 80%;
   padding: 24px 0;
   gap: 24px;

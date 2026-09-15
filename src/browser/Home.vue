@@ -170,6 +170,7 @@ const openSongDetailPage = (e?: any) => {
 .container {
   margin-top: 24px;
   width: 100vmin;
+  width: 100dvmin;
   position: absolute;
 }
 .container > h1 {

@@ -49,8 +49,10 @@ onUnmounted(() => {
   content: " ";
   display: block;
   height: 40vh;
+  height: 40dvh;
 }
 .song-detail-lyric {
+  width: 100%;
   overflow: auto;
   flex: 1;
   min-height: 0;

@@ -15,6 +15,9 @@ export type SongListProps = {
 const { list, openSongDetailPage } = defineProps<SongListProps>();
 const { songInfo } = usePlaySongInfo();
 const setSong = async (item: ISong, e: MouseEvent) => {
+  // @ts-ignore
+  window.audioContext.state === "suspended" && window.audioContext.resume();
+
   if (item.id === songInfo.value.id) return openSongDetailPage(e);
 
   if (iconTemplate.value) {
@@ -29,8 +32,11 @@ const setSong = async (item: ISong, e: MouseEvent) => {
   const [src, lyric] = await Promise.all([
     QQmusicSDK.playURL(item.mid, `C400${item.media_mid}.m4a`),
     QQmusicSDK.lyric(item.id),
+    // QQmusicSDK.songDetail(item.mid),
+    // QQmusicSDK.mvURL(item.mv_mid),
     new Promise(resolve => setTimeout(resolve, 360)),
   ]);
+  player.audio.play();
   myEvent.emit("setSong", { ...item, src, lyric: formatLyricLine(lyric, 5) });
 };
 
