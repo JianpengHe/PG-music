@@ -9,6 +9,8 @@ export type SongDetailPageProps = {
 };
 
 const { x, y, openSongDetailPage } = defineProps<SongDetailPageProps>();
+
+const sysBack = () => navigation.back();
 </script>
 <template>
   <Transition name="song-detail-page">
@@ -20,9 +22,9 @@ const { x, y, openSongDetailPage } = defineProps<SongDetailPageProps>();
       }"
       class="song-detail-page"
     >
-      <Back theme="outline" size="24" class="back-icon" @click="openSongDetailPage()" />
+      <Back theme="outline" size="24" class="back-icon" @click="sysBack" />
 
-      <SongDetail />
+      <SongDetail :openSongDetailPage="openSongDetailPage" />
     </div>
   </Transition>
 </template>

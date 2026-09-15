@@ -7,8 +7,28 @@ import { formatLyricLine } from "../../api/common/lyricConvert";
 import { QQmusicSDK } from "../QQmusicSDK";
 import { player } from "../player";
 import SongDetailLyric from "./SongDetailLyric.vue";
+import { onMounted, onUnmounted } from "vue";
+export type SongDetailProps = {
+  openSongDetailPage: (e?: any) => void;
+};
 
+const { openSongDetailPage } = defineProps<SongDetailProps>();
 const { songInfo } = usePlaySongInfo();
+const back = () => {
+  const url = new URL(window.location.href);
+  url.hash = "";
+  history.replaceState({}, "", String(url));
+  openSongDetailPage();
+};
+onMounted(() => {
+  const url = new URL(window.location.href);
+  url.hash = "#" + (player.currentSong?.mid || "");
+  history.pushState({}, "", String(url));
+  window.addEventListener("hashchange", back);
+});
+onUnmounted(() => {
+  window.removeEventListener("hashchange", back);
+});
 </script>
 <template>
   <div class="song-detail">
