@@ -5,10 +5,10 @@ import { Back } from "@icon-park/vue-next";
 export type SongDetailPageProps = {
   x: number;
   y: number;
-  setSongDetailPage: (e?: any) => void;
+  openSongDetailPage: (e?: any) => void;
 };
 
-const { x, y, setSongDetailPage } = defineProps<SongDetailPageProps>();
+const { x, y, openSongDetailPage } = defineProps<SongDetailPageProps>();
 </script>
 <template>
   <Transition name="song-detail-page">
@@ -20,7 +20,7 @@ const { x, y, setSongDetailPage } = defineProps<SongDetailPageProps>();
       }"
       class="song-detail-page"
     >
-      <Back theme="outline" size="24" class="back-icon" @click="setSongDetailPage()" />
+      <Back theme="outline" size="24" class="back-icon" @click="openSongDetailPage()" />
 
       <SongDetail />
     </div>

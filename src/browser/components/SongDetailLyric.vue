@@ -3,22 +3,17 @@ import type { ISong } from "../types";
 import { PlayOne, Pause, Entertainment, AddMusic } from "@icon-park/vue-next";
 import { usePlaySongInfo } from "../hooks/usePlaySongInfo";
 import { myEvent } from "../event";
-import { formatLyricLine, LyricShow } from "../../api/common/lyricConvert";
-import { QQmusicSDK } from "../QQmusicSDK";
+import { LyricShow } from "../../api/common/lyricConvert";
 import { player } from "../player";
 import { onMounted, onUnmounted, ref } from "vue";
 
 const { songInfo } = usePlaySongInfo();
-console.log(songInfo);
 const lyricRef = ref<HTMLDivElement>();
-// const curLineIndex = ref<number>(-1);
-
-// let onLyricLineChange: any;
 const lyric = ref<LyricShow["lyricData"]>(player.lyricShow.lyricData);
 function changeLyric() {
   lyric.value = player.lyricShow.lyricData;
   const parent = lyricRef.value;
-  if (!parent) return;
+  if (!parent || parent.children.length === 0 || lyric.value.lineIndex < 0) return;
   const { offsetTop, clientHeight } = parent.children[lyric.value.lineIndex] as any;
   parent.scrollTo({
     top: offsetTop - parent.clientHeight / 2,
@@ -26,26 +21,8 @@ function changeLyric() {
   });
 }
 onMounted(() => {
-  // onLyricLineChange = player.lyricShow.onLyricLineChange;
-  // player.lyricShow.onLyricLineChange = (html, index) => {
-  //   if (!lyricRef.value) return;
-  //   hiddenLineIndex.value = index;
-
-  //   const parent = lyricRef.value?.parentElement as HTMLDivElement;
-  //   const { offsetTop, clientHeight } = parent.children[index + 1] as any;
-  //   lyricRef.value.innerHTML = html;
-  //   lyricRef.value.style.transform = `translateY(${offsetTop - parent.clientHeight / 2 + clientHeight}px)`;
-  //   parent.scrollTo({
-  //     top: offsetTop - parent.clientHeight / 2,
-  //     behavior: "smooth",
-  //   });
-  //   // if (!dom) return;
-  //   // dom.style.display = "none";
-  //   // console.log(index, lyricRef.value?.children[index]);
-  // };
   myEvent.on("changeLyric", changeLyric);
   myEvent.emit("changeLyric", undefined);
-  //  if (!player.isPlaying) player.lyricShow.pause();
 });
 onUnmounted(() => {
   myEvent.off("changeLyric", changeLyric);

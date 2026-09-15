@@ -10,16 +10,19 @@ import { ref } from "vue";
 
 export type SongListProps = {
   list: ISong[];
+  openSongDetailPage: (e: any) => void;
 };
-
+const { list, openSongDetailPage } = defineProps<SongListProps>();
 const { songInfo } = usePlaySongInfo();
 const setSong = async (item: ISong, e: MouseEvent) => {
+  if (item.id === songInfo.value.id) return openSongDetailPage(e);
+
   if (iconTemplate.value) {
     const node = (iconTemplate.value as any).$el.cloneNode(true) as HTMLElement;
-    const { x, y } = e;
+    const { clientX, clientY } = e;
     node.style.display = "block";
-    node.style.left = `${x}px`;
-    node.style.top = `${y}px`;
+    node.style.left = `${clientX}px`;
+    node.style.top = `${clientY}px`;
     document.body.appendChild(node);
     node.addEventListener("animationend", () => node.remove());
   }
@@ -31,7 +34,6 @@ const setSong = async (item: ISong, e: MouseEvent) => {
   myEvent.emit("setSong", { ...item, src, lyric: formatLyricLine(lyric, 5) });
 };
 
-const { list } = defineProps<SongListProps>();
 const iconTemplate = ref<HTMLElement>();
 </script>
 <template>

@@ -7,11 +7,11 @@ import Home from "./Home.vue";
     <Home />
   </div>
 </template>
-<style scoped>
-:global(*) {
+<style>
+* {
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
-:global(:root) {
+:root {
   /* Background */
   --color-bg: #f7f8fc;
   --color-bg-secondary: #eef2fa;
@@ -39,20 +39,13 @@ import Home from "./Home.vue";
   /* Border */
   --color-border: #dce2f0;
 }
-.app {
-  background-color: var(--color-bg);
-  display: flex;
-  min-height: 100vh;
-  flex-direction: column;
-  align-items: center;
-}
 
-:global(span.i-icon) {
+span.i-icon {
   color: var(--color-text-secondary);
   cursor: pointer;
 }
 
-:global(.lyric) {
+.lyric {
   /* position: fixed;
   width: 100%; */
   height: 16px;
@@ -68,7 +61,7 @@ import Home from "./Home.vue";
   white-space: nowrap;
 }
 
-:global(.lyric span) {
+.lyric span {
   background-clip: text;
   -webkit-text-fill-color: transparent;
   background-color: var(--color-text-tertiary);
@@ -84,7 +77,7 @@ import Home from "./Home.vue";
   animation-play-state: paused;
 }
 
-:global(.musicPlaying .lyric span) {
+.musicPlaying .lyric span {
   animation-play-state: running;
 }
 
@@ -96,5 +89,24 @@ import Home from "./Home.vue";
   100% {
     background-size: 100%;
   }
+}
+</style>
+<style scoped>
+.app {
+  background-color: var(--color-bg);
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  overflow: auto;
+  width: 100%;
+}
+.app::-webkit-scrollbar {
+  display: none;
+}
+
+.app:has(.song-detail-page) {
+  overflow: hidden;
 }
 </style>

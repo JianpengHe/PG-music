@@ -7,10 +7,10 @@ import { myEvent } from "../event";
 import { LyricShow } from "../../api/common/lyricConvert";
 
 const { songInfo } = usePlaySongInfo();
-const { x, y, setSongDetailPage } = defineProps<{
+const { x, y, openSongDetailPage } = defineProps<{
   x: number;
   y: number;
-  setSongDetailPage: (e: any) => void;
+  openSongDetailPage: (e: any) => void;
 }>();
 
 const lyric = ref<LyricShow["lyricData"]>(player.lyricShow.lyricData);
@@ -26,7 +26,7 @@ onMounted(() => myEvent.on("changeLyric", changeLyric));
     class="song-item"
     :class="{ musicPlaying: songInfo.isPlaying }"
     :style="!!songInfo.id && !x && !y ? 'transform: translate(-50%, 0)' : 'transform: translate(-50%, 120%)'"
-    @click="setSongDetailPage"
+    @click="openSongDetailPage"
   >
     <img :src="songInfo.pic" alt="" />
     <div class="song-item-info">
