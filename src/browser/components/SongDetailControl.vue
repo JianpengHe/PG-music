@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { ISong } from "../types";
 import {
   PlayOne,
   Pause,
@@ -14,32 +13,16 @@ import {
 } from "@icon-park/vue-next";
 import { usePlaySongInfo } from "../hooks/usePlaySongInfo";
 import { myEvent } from "../event";
-import { formatLyricLine } from "../../api/common/lyricConvert";
 import { QQmusicSDK } from "../QQmusicSDK";
 import { player } from "../player";
-import SongDetailLyric from "./SongDetailLyric.vue";
 import { onMounted, onUnmounted, ref } from "vue";
+import SongDetailProgress from "./SongDetailProgress.vue";
 // export type SongDetailProps = {
 //   openSongDetailPage: (e?: any) => void;
 // };
 
 // const { openSongDetailPage } = defineProps<SongDetailProps>();
 const { songInfo } = usePlaySongInfo();
-// const back = () => {
-//   const url = new URL(window.location.href);
-//   url.hash = "";
-//   history.replaceState({}, "", String(url));
-//   openSongDetailPage();
-// };
-// onMounted(() => {
-//   const url = new URL(window.location.href);
-//   url.hash = "#" + (player.currentSong?.mid || "");
-//   history.pushState({}, "", String(url));
-//   window.addEventListener("hashchange", back);
-// });
-// onUnmounted(() => {
-//   window.removeEventListener("hashchange", back);
-// });
 
 const isMicrophone = ref(player.audioPlus.mic);
 async function toggleMicrophone() {
@@ -78,6 +61,7 @@ onUnmounted(() => {
       <VideoTwo size="20" title="视频MV" :class="{ active: isMV }" @click="toggleMV" />
       <VolumeNotice size="20" title="调节音量" />
     </div>
+    <SongDetailProgress />
     <div class="song-detail-control-btns song-detail-control-main-btn">
       <PlayCycle size="20" />
       <GoStart size="30" class="i-icon" />
