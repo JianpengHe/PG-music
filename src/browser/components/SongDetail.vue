@@ -7,6 +7,7 @@ import { formatLyricLine } from "../../api/common/lyricConvert";
 import { QQmusicSDK } from "../QQmusicSDK";
 import { player } from "../player";
 import SongDetailLyric from "./SongDetailLyric.vue";
+import SongDetailControl from "./SongDetailControl.vue";
 import { onMounted, onUnmounted } from "vue";
 export type SongDetailProps = {
   openSongDetailPage: (e?: any) => void;
@@ -38,6 +39,7 @@ onUnmounted(() => {
       <div class="song-detail-name">{{ songInfo.name }}</div>
       <div class="song-detail-singer">{{ songInfo.singer }}</div>
       <SongDetailLyric />
+      <SongDetailControl />
     </div>
   </div>
 </template>
@@ -73,7 +75,7 @@ onUnmounted(() => {
   left: 50%;
   top: 50%;
   background-color: #000;
-  opacity: 0.2;
+  opacity: 0.4;
   z-index: -1;
 }
 .song-detail-content {

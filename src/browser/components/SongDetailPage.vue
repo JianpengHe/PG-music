@@ -28,11 +28,45 @@ const sysBack = () => navigation.back();
     </div>
   </Transition>
 </template>
-<style scoped>
-.back-icon.i-icon {
-  color: var(--color-bg-secondary);
+<style>
+.song-detail-page .i-icon {
+  color: var(--color-border);
   cursor: pointer;
+  filter: drop-shadow(0 0px 8px rgba(0, 0, 0, 0.5));
 }
+/* .song-detail-page path {
+  filter: drop-shadow(0px 0px 3px rgba(0, 0, 0, 0.2));
+} */
+/* .song-detail-page .i-icon::after {
+  content: " ";
+  position: relative;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--color-border-hover);
+  display: block;
+} */
+/* .song-detail-page .i-icon {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+} */
+/* .song-detail-page .i-icon {
+  position: relative;
+  display: inline-block;
+}
+
+.song-detail-page .i-icon svg {
+  display: block;
+}
+
+.song-detail-page .i-icon::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--color-border-hover);
+} */
+</style>
+<style scoped>
 .back-icon {
   position: absolute;
   top: 10px;

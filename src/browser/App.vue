@@ -38,6 +38,7 @@ import Home from "./Home.vue";
 
   /* Border */
   --color-border: #dce2f0;
+  --color-border-hover: #b3c4e0b0;
 }
 
 span.i-icon {

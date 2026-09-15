@@ -14,7 +14,8 @@ class Player {
     () => ({ currentTime: this.audio.currentTime, paused: !this.isPlaying }),
   );
   private readonly audio: HTMLAudioElement = document.createElement("audio");
-  private readonly audioPlus = new AudioPlus(this.audio);
+  // @ts-ignore
+  public readonly audioPlus = new AudioPlus(this.audio, window.audioContext);
   constructor() {
     this.audio.style.display = "none";
     //this.audio.loop = true;
