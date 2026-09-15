@@ -93,6 +93,7 @@ export class QQmusicAPI {
       file: {
         media_mid: string;
       };
+      mv: { id: number; vid: string };
     }[];
   }> {
     let o = { sum: 0, list: [] };
@@ -130,6 +131,35 @@ export class QQmusicAPI {
     }
     if (!purl) throw new Error("获取播放URL失败");
     return "https://ws.stream.qqmusic.qq.com/" + purl;
+  }
+
+  public async songDetail(song_mid: string) {
+    const { code, data } = await this.request("get_song_detail_yqq", "music.pf_song_detail_svr", {
+      song_type: 0,
+      song_mid,
+    });
+    console.log(data);
+    return data;
+  }
+  public async mvURL(mv_mid?: string) {
+    if (!mv_mid) return "";
+    const { code, data } = await this.request("GetMvUrls", "music.stream.MvUrlProxy", {
+      vids: [mv_mid],
+      request_type: 10003,
+      // guid: get_guid(),
+      videoformat: 1,
+      format: 265,
+      dolby: 1,
+      use_new_domain: 1,
+      use_ipv6: 1,
+    });
+    if (!Array.isArray(data[mv_mid]?.mp4)) throw new Error("获取MV URL失败");
+    return String(
+      data[mv_mid].mp4
+        .filter((item: any) => item.vkey)
+        .sort((a: any, b: any) => (b.fileSize || 0) - (a.fileSize || 0))[0]
+        ?.freeflow_url?.find((item: string) => item.startsWith("https://")) || "",
+    );
   }
   public getMusicImgUrl(pmid: string) {
     return `https://y.gtimg.cn/music/photo_new/T002R300x300M000${pmid}.jpg?max_age=2592000`;

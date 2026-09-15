@@ -52,13 +52,30 @@ function toggleInstrumental() {
   isInstrumental.value = !isInstrumental.value;
   player.audioPlus.instrumental = isInstrumental.value;
 }
+
+const isMV = ref(false);
+async function toggleMV() {
+  if (!songInfo.value) return;
+  if (isMV.value) {
+    isMV.value = false;
+    myEvent.emit("setSong", songInfo.value as any);
+    return;
+  }
+  const url = await QQmusicSDK.mvURL(songInfo.value.mv_mid);
+  if (!url) return;
+  player.openVideo(url);
+  isMV.value = true;
+}
+onUnmounted(() => {
+  if (isMV.value) myEvent.emit("setSong", songInfo.value as any);
+});
 </script>
 <template>
   <div class="song-detail-control">
     <div class="song-detail-control-btns">
       <Entertainment size="20" title="开启麦克风" :class="{ active: isMicrophone }" @click="toggleMicrophone" />
       <Piano size="20" title="切换伴奏" :class="{ active: isInstrumental }" @click="toggleInstrumental" />
-      <VideoTwo size="20" title="视频MV" />
+      <VideoTwo size="20" title="视频MV" :class="{ active: isMV }" @click="toggleMV" />
       <VolumeNotice size="20" title="调节音量" />
     </div>
     <div class="song-detail-control-btns song-detail-control-main-btn">

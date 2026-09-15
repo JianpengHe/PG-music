@@ -26,6 +26,7 @@ const songList = ref<ISong[]>([
     singer: "陈奕迅",
     pic: "https://y.gtimg.cn/music/photo_new/T002R300x300M000004Z85XP1c25b7_5.jpg?max_age=2592000",
     media_mid: "001dXZ352YGvqU",
+    mv_mid: "k0012md5982",
   },
   {
     start: 0,
@@ -80,6 +81,7 @@ const songList = ref<ISong[]>([
     singer: "陈奕迅",
     pic: "https://y.gtimg.cn/music/photo_new/T002R300x300M000003J6fvc0bVJon_3.jpg?max_age=2592000",
     media_mid: "000mVAmc4SRnnN",
+    mv_mid: "q0010Lj82uC",
   },
   {
     start: 0,
@@ -129,7 +131,7 @@ const songList = ref<ISong[]>([
 ]);
 const submit = async (value: string) => {
   console.log("发起搜索", value);
-  songList.value = (await QQmusicSDK.search(value)).list.map(({ id, mid, name, singer, album, file }) => ({
+  songList.value = (await QQmusicSDK.search(value)).list.map(({ id, mid, name, singer, album, file, mv }) => ({
     start: 0,
     id,
     mid,
@@ -137,6 +139,7 @@ const submit = async (value: string) => {
     singer: singer.map(item => item.name).join("、"),
     pic: QQmusicSDK.getMusicImgUrl(album.pmid),
     media_mid: file.media_mid,
+    mv_mid: mv?.vid,
   }));
   console.log(songList.value, JSON.stringify(songList.value));
 };

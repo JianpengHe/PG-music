@@ -13,12 +13,20 @@ class Player {
     () => myEvent.emit("changeLyric", undefined),
     () => ({ currentTime: this.audio.currentTime, paused: !this.isPlaying }),
   );
-  private readonly audio: HTMLAudioElement = document.createElement("audio");
+  private readonly audio: HTMLVideoElement = document.createElement("video");
   // @ts-ignore
   public readonly audioPlus = new AudioPlus(this.audio, window.audioContext);
   constructor() {
-    this.audio.style.display = "none";
+    this.audio.style.cssText = `display: none;
+    position: fixed;
+    z-index: 99999;
+    max-width: 100vw;
+    max-height: 100vh;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);`;
     //this.audio.loop = true;
+    this.audio.controls = true;
     this.audio.crossOrigin = "anonymous";
     document.body.appendChild(this.audio);
     this.audio.addEventListener("ended", () => {
@@ -51,6 +59,9 @@ class Player {
         this.currentSongId = detail.id;
         this.audio.src = detail.src;
         this.audio.currentTime = detail.start;
+        // this.audio.poster = detail.pic;
+        this.audio.style.display = "none";
+        // this.audio.dataset.src = detail.src;
       });
     });
   }
@@ -60,6 +71,13 @@ class Player {
     } else {
       this.audio.play();
     }
+  }
+
+  public openVideo(src: string) {
+    this.audio.pause();
+    this.audio.style.display = "block";
+    this.audio.src = src;
+    this.audio.play();
   }
 
   // public play(index: number) {
