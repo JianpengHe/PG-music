@@ -18,11 +18,6 @@ import { player } from "../player";
 import { onMounted, onUnmounted, ref } from "vue";
 import SongDetailProgress from "./SongDetailProgress.vue";
 import SongDetailVolume from "./SongDetailVolume.vue";
-// export type SongDetailProps = {
-//   openSongDetailPage: (e?: any) => void;
-// };
-
-// const { openSongDetailPage } = defineProps<SongDetailProps>();
 const { songInfo } = usePlaySongInfo();
 
 const isMicrophone = ref(player.audioPlus.mic);
@@ -52,10 +47,21 @@ async function toggleMV() {
 }
 
 const isVolume = ref(false);
+
 function setVolume(value: boolean) {
+  console.log("setVolume", value);
+  // if (!value) return;
   isVolume.value = value;
 }
+// function closeVolume(e: Event) {
+//   let target = e.target as Element | null;
+//   while (target && target.classList.toggle("song-detail-volume-dialog-content")) {
+//     if (target === document.body) return setVolume(false);
+//     target = target.parentElement;
+//   }
+// }
 onUnmounted(() => {
+  // window.removeEventListener("cilck", closeVolume);
   if (isMV.value) myEvent.emit("setSong", songInfo.value as any);
 });
 </script>
@@ -67,9 +73,7 @@ onUnmounted(() => {
       <VideoTwo size="20" title="视频MV" :class="{ active: isMV }" @click="toggleMV" />
       <div
         class="song-detail-volume"
-        tabindex="0"
-        @focus="setVolume(true)"
-        @blur="setVolume(false)"
+        @click="setVolume(true)"
         @mouseenter="setVolume(true)"
         @mouseleave="setVolume(false)"
       >
@@ -92,6 +96,7 @@ onUnmounted(() => {
       <ListBottom size="20" />
     </div>
   </div>
+  <div v-if="isVolume" class="song-detail-volume-dialog-mask" @pointerdown="setVolume(false)"></div>
 </template>
 <style scoped>
 .song-detail-control {
@@ -113,6 +118,7 @@ onUnmounted(() => {
 }
 .song-detail-volume {
   position: relative;
+  z-index: 100000;
 }
 .song-detail-volume-dialog {
   position: absolute;
@@ -128,6 +134,16 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   display: flex;
+}
+.song-detail-volume-dialog-mask {
+  position: fixed;
+  width: 100vw;
+  width: 100dvw;
+  height: 100vh;
+  height: 100dvh;
+  top: 0;
+  left: 0;
+  z-index: 99999;
 }
 </style>
 <style>
