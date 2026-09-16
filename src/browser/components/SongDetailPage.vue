@@ -21,6 +21,9 @@ const sysBack = () => navigation.back();
         '--start-y': `${y}px`,
       }"
       class="song-detail-page"
+      @contextmenu.prevent
+      @selectstart.prevent
+      @dragstart.prevent
     >
       <Back theme="outline" size="24" class="back-icon" @click="sysBack" />
 

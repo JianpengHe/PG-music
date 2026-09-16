@@ -106,13 +106,12 @@ function tryLoadMore() {
   if (!appRef.value || isBuy || !kw) return;
   const { scrollTop, scrollHeight, clientHeight } = appRef.value;
   if (scrollHeight - scrollTop - clientHeight > clientHeight * 0.5) return;
-  console.log("LoadMore", scrollTop, scrollHeight, clientHeight);
   submit(kw, curPageNum + 1);
 }
 </script>
 
 <template>
-  <div class="app" @contextmenu.prevent @selectstart.prevent @dragstart.prevent @scroll="tryLoadMore" ref="appRef">
+  <div class="app" @scroll="tryLoadMore" ref="appRef">
     <div class="container">
       <h1>鹏飞音乐</h1>
       <SearchSong placeholder="搜索" :getSmartTips="getSmartTips" @submit="submit" />
