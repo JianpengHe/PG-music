@@ -3,7 +3,7 @@ import Home from "./Home.vue";
 </script>
 
 <template>
-  <div class="app">
+  <div class="app" @contextmenu.prevent @selectstart.prevent @dragstart.prevent>
     <Home />
   </div>
 </template>
