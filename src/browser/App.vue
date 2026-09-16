@@ -1,97 +1,127 @@
 <script setup lang="ts">
-import Home from "./Home.vue";
+import "./style.css";
+
+import SearchSong from "@/components/SearchSong.vue";
+import SongList from "@/components/SongList.vue";
+import SongPlayer from "@/components/SongPlayer.vue";
+import SongDetailPage from "@/components/SongDetailPage.vue";
+import type { ISong } from "./types";
+import { ref } from "vue";
+import { QQmusicSDK } from "./QQmusicSDK";
+
+const getSmartTips = (value: string) => QQmusicSDK.smartbox(value);
+const songList = ref<ISong[]>(
+  location.protocol === "https:"
+    ? []
+    : [
+        {
+          start: 0,
+          id: 1338414,
+          mid: "003hFxQh276Cv5",
+          name: "最佳损友",
+          singer: "陈奕迅",
+          pic: "https://y.gtimg.cn/music/photo_new/T002R300x300M000002FT46H18G1jW_4.jpg?max_age=2592000",
+          media_mid: "003C9fBv2K4x8b",
+        },
+        {
+          start: 0,
+          id: 260678,
+          mid: "003aAPj81VWrbL",
+          name: "富士山下",
+          singer: "陈奕迅",
+          pic: "https://y.gtimg.cn/music/photo_new/T002R300x300M000004Z85XP1c25b7_5.jpg?max_age=2592000",
+          media_mid: "001dXZ352YGvqU",
+          mv_mid: "k0012md5982",
+        },
+        {
+          start: 0,
+          id: 1331307,
+          mid: "000Cmo8Q2pBpZs",
+          name: "Merry-Go-Round of Life",
+          singer: "久石让",
+          pic: "https://y.gtimg.cn/music/photo_new/T002R300x300M0000000aeS72qwLag_2.jpg?max_age=2592000",
+          media_mid: "000BH1Ng2HFfvC",
+        },
+        {
+          start: 0,
+          id: 253968019,
+          mid: "002xbnUT2NiCIm",
+          name: "人生的旋转木马",
+          singer: "久石让",
+          pic: "https://y.gtimg.cn/music/photo_new/T002R300x300M000000bMJur4HuxyY_4.jpg?max_age=2592000",
+          media_mid: "002JzmZq3esxNS",
+        },
+        {
+          start: 0,
+          id: 1251167,
+          mid: "0029Zemv0kR1ur",
+          name: "葡萄成熟时",
+          singer: "陈奕迅",
+          pic: "https://y.gtimg.cn/music/photo_new/T002R300x300M000003J6fvc0bVJon_3.jpg?max_age=2592000",
+          media_mid: "000mVAmc4SRnnN",
+          mv_mid: "q0010Lj82uC",
+        },
+      ],
+);
+let kw = "";
+let curPageNum = 1;
+let isBuy = false;
+const submit = async (value: string, pageNum = 1) => {
+  isBuy = true;
+  console.log("发起搜索", value, pageNum);
+  kw = value;
+  curPageNum = pageNum;
+  const res = (await QQmusicSDK.search(value, pageNum)).list.map(({ id, mid, name, singer, album, file, mv }) => ({
+    start: 0,
+    id,
+    mid,
+    name,
+    singer: singer.map(item => item.name).join("、"),
+    pic: QQmusicSDK.getMusicImgUrl(album.pmid),
+    media_mid: file.media_mid,
+    mv_mid: mv?.vid,
+  }));
+  const map = new Map(pageNum === 1 ? [] : songList.value.map(item => [item.id, item]));
+  for (const item of res) map.set(item.id, item);
+  songList.value = [...map.values()];
+  // console.log(songList.value, JSON.stringify(songList.value));
+  setTimeout(tryLoadMore, 100);
+  isBuy = false;
+};
+
+const songDetailPage = ref({ x: 0, y: 0 });
+const openSongDetailPage = (e?: any) => {
+  if (e) {
+    songDetailPage.value = {
+      x: e.clientX - innerWidth / 2,
+      y: e.clientY - innerHeight / 2,
+    };
+    return;
+  }
+  songDetailPage.value = { x: 0, y: 0 };
+};
+
+const appRef = ref<HTMLDivElement>();
+function tryLoadMore() {
+  if (!appRef.value || isBuy || !kw) return;
+  const { scrollTop, scrollHeight, clientHeight } = appRef.value;
+  if (scrollHeight - scrollTop - clientHeight > clientHeight * 0.5) return;
+  console.log("LoadMore", scrollTop, scrollHeight, clientHeight);
+  submit(kw, curPageNum + 1);
+}
 </script>
 
 <template>
-  <div class="app" @contextmenu.prevent @selectstart.prevent @dragstart.prevent>
-    <Home />
+  <div class="app" @contextmenu.prevent @selectstart.prevent @dragstart.prevent @scroll="tryLoadMore" ref="appRef">
+    <div class="container">
+      <h1>鹏飞音乐</h1>
+      <SearchSong placeholder="搜索" :getSmartTips="getSmartTips" @submit="submit" />
+      <SongList :list="songList" :openSongDetailPage="openSongDetailPage" />
+    </div>
   </div>
+  <SongPlayer :x="songDetailPage.x" :y="songDetailPage.y" :openSongDetailPage="openSongDetailPage" />
+  <SongDetailPage :x="songDetailPage.x" :y="songDetailPage.y" :openSongDetailPage="openSongDetailPage" />
 </template>
-<style>
-* {
-  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
-}
-:root {
-  /* Background */
-  --color-bg: #f7f8fc;
-  --color-bg-secondary: #eef2fa;
-  --color-shadow: #5975c54d;
-
-  /* Surface */
-  --color-surface: #ffffff;
-  --color-surface-hover: #f0f4fc;
-
-  /* Primary */
-  --color-primary: #5975c5;
-  --color-primary-hover: #6c84d8;
-  --color-primary-active: #465fa8;
-  --color-primary-light: #8199e8;
-
-  /* Accent */
-  --color-accent: #c6a83d;
-  --color-accent-light: #e2d18a;
-
-  /* Text */
-  --color-text-primary: #202744;
-  --color-text-secondary: #59647f;
-  --color-text-tertiary: #8b94aa;
-
-  /* Border */
-  --color-border: #dce2f0;
-  --color-border-hover: #b3c4e0b0;
-}
-
-span.i-icon {
-  color: var(--color-text-secondary);
-  cursor: pointer;
-}
-
-.lyric {
-  /* position: fixed;
-  width: 100%; */
-  height: 16px;
-  /* bottom: 4vmin; */
-  /* z-index: 999999; */
-  pointer-events: none;
-  text-align: center;
-  /* font-size: 18px; */
-  /* line-height: 50px; */
-  /* opacity: 0;
-    transition: opacity 0.5s; */
-  /* left: 0; */
-  white-space: nowrap;
-}
-
-.lyric span {
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-color: var(--color-text-tertiary);
-  background-image: linear-gradient(var(--color-primary), var(--color-primary));
-  background-repeat: no-repeat;
-  background-size: 0%;
-  animation-fill-mode: forwards;
-  animation-timing-function: linear;
-  animation-iteration-count: 1;
-  animation-delay: 0s;
-  animation-direction: normal;
-  animation-name: lyric;
-  animation-play-state: paused;
-}
-
-.musicPlaying .lyric span {
-  animation-play-state: running;
-}
-
-@keyframes lyric {
-  0% {
-    background-size: 0%;
-  }
-
-  100% {
-    background-size: 100%;
-  }
-}
-</style>
 <style scoped>
 .app {
   background-color: var(--color-bg);
@@ -109,5 +139,16 @@ span.i-icon {
 
 .app:has(.song-detail-page) {
   overflow: hidden;
+}
+.container {
+  margin-top: 24px;
+  width: 100vmin;
+  width: 100dvmin;
+  position: absolute;
+}
+.container > h1 {
+  font-size: 20px;
+  margin: 12px 24px;
+  padding: 0;
 }
 </style>

@@ -146,11 +146,3 @@ onUnmounted(() => {
   z-index: 99999;
 }
 </style>
-<style>
-.song-detail-control-btns svg[width="20"] {
-  color: var(--color-border-hover);
-}
-.song-detail-control-btns .i-icon.active svg {
-  color: var(--color-primary) !important;
-}
-</style>

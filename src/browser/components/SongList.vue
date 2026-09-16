@@ -51,7 +51,6 @@ const iconTemplate = ref<HTMLElement>();
         <h4>{{ item.singer }}</h4>
       </div>
       <div class="song-item-icons">
-        <Entertainment size="20" />
         <AddMusic size="20" />
         <Pause v-if="item.id === songInfo.id && songInfo.isPlaying" size="20" @click.stop="player.playOrPause()" />
         <PlayOne v-else size="20" />
