@@ -13,11 +13,32 @@ function changeLyric() {
   const parent = lyricRef.value;
   if (!parent || parent.children.length === 0 || lyric.value.lineIndex < 0) return;
   const { offsetTop, clientHeight } = parent.children[lyric.value.lineIndex] as any;
-  parent.scrollTo({
-    top: offsetTop - parent.clientHeight / 2,
-    behavior: "smooth",
-  });
+  if (performance.now() > cdTime)
+    parent.scrollTo({
+      top: offsetTop - parent.clientHeight / 2,
+      behavior: "smooth",
+    });
 }
+
+let cdTime = 0;
+let timer = 0;
+function setCDTime() {
+  cdTime = performance.now() + 3000;
+  if (timer) clearTimeout(timer);
+  timer = setTimeout(() => {
+    timer = 0;
+    myEvent.emit("changeLyric", undefined);
+  }, 3100);
+}
+function moveStart() {
+  cdTime = Infinity;
+  const end = () => {
+    setCDTime();
+    window.removeEventListener("touchend", end);
+  };
+  window.addEventListener("touchend", end);
+}
+
 onMounted(() => {
   myEvent.on("changeLyric", changeLyric);
   myEvent.emit("changeLyric", undefined);
@@ -28,7 +49,13 @@ onUnmounted(() => {
 });
 </script>
 <template>
-  <div class="song-detail-lyric" :class="{ musicPlaying: songInfo.isPlaying }" ref="lyricRef">
+  <div
+    class="song-detail-lyric"
+    :class="{ musicPlaying: songInfo.isPlaying }"
+    ref="lyricRef"
+    @wheel="setCDTime"
+    @touchstart="moveStart"
+  >
     <div v-for="(line, index) in songInfo.lyric" :key="index" :class="{ lyric: lyric.lineIndex === index }">
       <span
         v-if="lyric.lineIndex === index"
