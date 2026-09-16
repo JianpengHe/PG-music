@@ -87,3 +87,49 @@ onUnmounted(() => {
   align-items: center;
 }
 </style>
+<style>
+/* 进度条 */
+.song-detail-progress-bar {
+  --progress: 0%;
+  --size: 2px;
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  cursor: pointer;
+  touch-action: none;
+}
+.song-detail-progress-bar-line {
+  position: absolute;
+  display: block;
+  /* inset: 0 auto 0 0; */
+  border-radius: var(--size);
+  pointer-events: none;
+}
+/* 未播放部分 */
+.song-detail-progress-bar-none {
+  background: var(--color-border-hover);
+}
+
+/* 已播放部分 */
+.song-detail-progress-bar-fill {
+  background: var(--color-border);
+}
+
+/* 圆点 */
+.song-detail-progress-bar-ball {
+  position: absolute;
+
+  width: 12px;
+  height: 12px;
+
+  border-radius: 50%;
+  background: var(--color-border);
+
+  cursor: grab;
+}
+.song-detail-progress-bar-ball:hover {
+  width: 16px;
+  height: 16px;
+}
+</style>

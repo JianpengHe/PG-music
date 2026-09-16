@@ -17,6 +17,7 @@ import { QQmusicSDK } from "../QQmusicSDK";
 import { player } from "../player";
 import { onMounted, onUnmounted, ref } from "vue";
 import SongDetailProgress from "./SongDetailProgress.vue";
+import SongDetailVolume from "./SongDetailVolume.vue";
 // export type SongDetailProps = {
 //   openSongDetailPage: (e?: any) => void;
 // };
@@ -49,6 +50,11 @@ async function toggleMV() {
   player.openVideo(url);
   isMV.value = true;
 }
+
+const isVolume = ref(false);
+function setVolume(value: boolean) {
+  isVolume.value = value;
+}
 onUnmounted(() => {
   if (isMV.value) myEvent.emit("setSong", songInfo.value as any);
 });
@@ -59,7 +65,22 @@ onUnmounted(() => {
       <Entertainment size="20" title="开启麦克风" :class="{ active: isMicrophone }" @click="toggleMicrophone" />
       <Piano size="20" title="切换伴奏" :class="{ active: isInstrumental }" @click="toggleInstrumental" />
       <VideoTwo size="20" title="视频MV" :class="{ active: isMV }" @click="toggleMV" />
-      <VolumeNotice size="20" title="调节音量" />
+      <div
+        class="song-detail-volume"
+        tabindex="0"
+        @focus="setVolume(true)"
+        @blur="setVolume(false)"
+        @mouseenter="setVolume(true)"
+        @mouseleave="setVolume(false)"
+      >
+        <VolumeNotice size="20" title="调节音量" :class="{ active: isVolume }" />
+        <div class="song-detail-volume-dialog" v-if="isVolume">
+          <div class="song-detail-volume-dialog-content">
+            <SongDetailVolume type="music" />
+            <SongDetailVolume type="mic" v-if="isMicrophone" />
+          </div>
+        </div>
+      </div>
     </div>
     <SongDetailProgress />
     <div class="song-detail-control-btns song-detail-control-main-btn">
@@ -90,10 +111,24 @@ onUnmounted(() => {
   max-width: 400px;
   width: 100%;
 }
-
-/* .song-detail-control-main-btn {
-  opacity: 1;
-} */
+.song-detail-volume {
+  position: relative;
+}
+.song-detail-volume-dialog {
+  position: absolute;
+  height: 200px;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -100%);
+  padding: 8px;
+}
+.song-detail-volume-dialog-content {
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 8px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+}
 </style>
 <style>
 .song-detail-control-btns svg[width="20"] {

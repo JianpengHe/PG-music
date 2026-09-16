@@ -20,18 +20,6 @@ function formatTime(time: number) {
   return `${String(Math.floor(time / 60)).padStart(2, "0")}:${String(Math.floor(time % 60)).padStart(2, "0")}`;
 }
 
-function seek(e: MouseEvent) {
-  if (!duration.value) return;
-
-  const bar = e.currentTarget as HTMLElement;
-  const rect = bar.getBoundingClientRect();
-
-  const percent = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
-
-  player.audio.currentTime = percent * duration.value;
-  currentTime.value = Math.floor(player.audio.currentTime);
-}
-
 const progress = () => {
   if (!duration.value) return 0;
   return Math.min(100, Math.max(0, currentTime.value / duration.value) * 100);
@@ -41,12 +29,13 @@ function moveStart(e: PointerEvent) {
   if (!duration.value) return;
   isDragging.value = true;
 
-  const bar = e.currentTarget as HTMLElement;
-  const { width } = bar.parentElement!.getBoundingClientRect();
-  const x = e.clientX - width * (currentTime.value / duration.value);
+  const { left, width } = (e.currentTarget as HTMLElement).getBoundingClientRect();
+  // const { width } = bar.parentElement!.getBoundingClientRect();
+  // const x = e.clientX - width * (currentTime.value / duration.value);
 
   function move(e: PointerEvent) {
-    const percent = Math.min(1, Math.max(0, (e.clientX - x) / width));
+    const percent = Math.min(1, Math.max(0, (e.clientX - left) / width));
+    // const percent = Math.min(1, Math.max(0, (e.clientX - x) / width));
     currentTime.value = Math.floor(percent * duration.value);
   }
 
@@ -82,12 +71,11 @@ onUnmounted(() => {
     <div class="song-detail-progress-time">
       {{ formatTime(currentTime) }}
     </div>
-
-    <div class="song-detail-progress-bar" @click="seek" :style="{ '--progress': `${progress()}%` }">
-      <div class="song-detail-progress-bar-fill"></div>
-      <div class="song-detail-progress-bar-ball" @pointerdown="moveStart"></div>
+    <div class="song-detail-progress-bar" @pointerdown="moveStart" :style="{ '--progress': `${progress()}%` }">
+      <div class="song-detail-progress-bar-line song-detail-progress-bar-none"></div>
+      <div class="song-detail-progress-bar-line song-detail-progress-bar-fill"></div>
+      <div class="song-detail-progress-bar-ball"></div>
     </div>
-
     <div class="song-detail-progress-time">
       {{ formatTime(duration) }}
     </div>
@@ -114,47 +102,29 @@ onUnmounted(() => {
 }
 
 /* 进度条 */
+
 .song-detail-progress-bar {
-  --progress: 0%;
-
-  position: relative;
-  flex: 1;
-  min-width: 0;
-
-  height: 4px;
-
-  cursor: pointer;
-  border-radius: 2px;
-  background: var(--color-border-hover);
-  touch-action: none;
+  height: 24px;
+}
+.song-detail-progress-bar-line {
+  top: 50%;
+  transform: translateY(-50%);
+  height: var(--size);
+}
+/* 未播放部分 */
+.song-detail-progress-bar-none {
+  width: 100%;
 }
 
 /* 已播放部分 */
 .song-detail-progress-bar-fill {
-  position: absolute;
-  inset: 0 auto 0 0;
-
   width: var(--progress);
-
-  border-radius: inherit;
-  background: var(--color-border);
-
-  pointer-events: none;
 }
 
 /* 圆点 */
 .song-detail-progress-bar-ball {
-  position: absolute;
   top: 50%;
   left: var(--progress);
-
-  width: 12px;
-  height: 12px;
-
-  border-radius: 50%;
-  background: var(--color-border);
-
   transform: translate(-50%, -50%);
-  cursor: grab;
 }
 </style>

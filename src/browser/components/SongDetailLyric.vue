@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import type { ISong } from "../types";
-import { PlayOne, Pause, Entertainment, AddMusic } from "@icon-park/vue-next";
 import { usePlaySongInfo } from "../hooks/usePlaySongInfo";
 import { myEvent } from "../event";
 import { LyricShow } from "../../api/common/lyricConvert";
