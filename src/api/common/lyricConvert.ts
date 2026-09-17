@@ -581,7 +581,7 @@ export class LyricShow {
      * 再递归调用 play 进入下一行
      */
     if (!paused) this.delayNext(this.lineShowTimeList[lineIndex] - currentTimeMs + 5);
-    console.log(data);
+    // console.log(data);
     return { data, lineIndex };
   }
 

@@ -65,13 +65,14 @@ const songList = ref<ISong[]>(
 );
 let kw = "";
 let curPageNum = 1;
-let isBuy = false;
+/** 是否可以发起下次搜索请求 */
+let canReqSearch = true;
 const submit = async (value: string, pageNum = 1) => {
-  isBuy = true;
-  console.log("发起搜索", value, pageNum);
+  canReqSearch = false;
+  // console.log("发起搜索", value, pageNum);
   kw = value;
   curPageNum = pageNum;
-  const res = (await QQmusicSDK.search(value, pageNum)).list.map(({ id, mid, name, singer, album, file, mv }) => ({
+  const res = (await QQmusicSDK.search(value, pageNum, 20)).list.map(({ id, mid, name, singer, album, file, mv }) => ({
     start: 0,
     id,
     mid,
@@ -86,7 +87,7 @@ const submit = async (value: string, pageNum = 1) => {
   songList.value = [...map.values()];
   // console.log(songList.value, JSON.stringify(songList.value));
   setTimeout(tryLoadMore, 100);
-  isBuy = false;
+  if (res.length) canReqSearch = true;
 };
 
 const songDetailPage = ref({ x: 0, y: 0 });
@@ -103,7 +104,7 @@ const openSongDetailPage = (e?: any) => {
 
 const appRef = ref<HTMLDivElement>();
 function tryLoadMore() {
-  if (!appRef.value || isBuy || !kw) return;
+  if (!appRef.value || !canReqSearch || !kw) return;
   const { scrollTop, scrollHeight, clientHeight } = appRef.value;
   if (scrollHeight - scrollTop - clientHeight > clientHeight * 0.5) return;
   submit(kw, curPageNum + 1);
