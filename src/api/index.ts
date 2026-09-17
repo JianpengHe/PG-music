@@ -145,20 +145,25 @@ export class QQmusicAPI {
     if (!mv_mid) return "";
     const { code, data } = await this.request("GetMvUrls", "music.stream.MvUrlProxy", {
       vids: [mv_mid],
-      request_type: 10003,
-      // guid: get_guid(),
-      videoformat: 1,
+      // // guid: get_guid(),
+      // videoformat: 1,
+      // dolby: 1,
+      // use_new_domain: 1,
+      // use_ipv6: 1,
+      filetype: 10,
       format: 265,
-      dolby: 1,
-      use_new_domain: 1,
-      use_ipv6: 1,
+      maxFiletype: 60,
+      request_type: 10003,
+      testCdn: 1,
     });
     if (!Array.isArray(data[mv_mid]?.mp4)) throw new Error("获取MV URL失败");
-    return String(
+    const { freeflow_url, urlPath } =
       data[mv_mid].mp4
-        .filter((item: any) => item.vkey)
-        .sort((a: any, b: any) => (b.fileSize || 0) - (a.fileSize || 0))[0]
-        ?.freeflow_url?.find((item: string) => item.startsWith("https://")) || "",
+        .filter((item: any) => item.urlPath)
+        .sort((a: any, b: any) => (b.fileSize || 0) - (a.fileSize || 0))[0] || {};
+
+    return String(
+      freeflow_url?.find((item: string) => item.startsWith("https://")) || `https://mv.music.tc.qq.com/` + urlPath,
     );
   }
   public getMusicImgUrl(pmid: string) {

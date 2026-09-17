@@ -108,6 +108,8 @@ export const QQmusicComm = {
   uin: "1",
   // g_tk_new_20200303: 5381,
   // g_tk: 5381,
+  ct: "19",
+  cv: "2261",
 };
 
 export const QQserverUrl = "https://u.y.qq.com/cgi-bin/musics.fcg";
