@@ -10,6 +10,7 @@ import {
   Piano,
   VideoTwo,
   VolumeNotice,
+  PlayOnce,
 } from "@icon-park/vue-next";
 import { usePlaySongInfo } from "../hooks/usePlaySongInfo";
 import { myEvent } from "../event";
@@ -19,6 +20,10 @@ import { onMounted, onUnmounted, ref } from "vue";
 import SongDetailProgress from "./SongDetailProgress.vue";
 import SongDetailVolume from "./SongDetailVolume.vue";
 const { songInfo } = usePlaySongInfo();
+const playType = ref(player.playType);
+function togglePlayType() {
+  playType.value = player.playType = playType.value === "normal" ? "loop" : "normal";
+}
 
 const isMicrophone = ref(player.audioPlus.mic);
 async function toggleMicrophone() {
@@ -88,11 +93,12 @@ onUnmounted(() => {
     </div>
     <SongDetailProgress />
     <div class="song-detail-control-btns song-detail-control-main-btn">
-      <PlayCycle size="20" />
-      <GoStart size="30" class="i-icon" />
+      <PlayCycle v-if="playType === 'normal'" size="20" @click="togglePlayType" />
+      <PlayOnce v-if="playType === 'loop'" size="20" @click="togglePlayType" />
+      <GoStart size="30" @click="player.prevSong()" />
       <Pause v-if="songInfo.isPlaying" size="48" @click.stop="player.playOrPause()" />
       <PlayOne v-else size="48" @click.stop="player.playOrPause()" />
-      <GoEnd size="30" />
+      <GoEnd size="30" @click="player.nextSong()" />
       <ListBottom size="20" />
     </div>
   </div>

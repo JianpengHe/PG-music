@@ -6,82 +6,32 @@ import SongList from "@/components/SongList.vue";
 import SongPlayer from "@/components/SongPlayer.vue";
 import SongDetailPage from "@/components/SongDetailPage.vue";
 import type { ISong } from "./types";
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { QQmusicSDK } from "./QQmusicSDK";
+import { debouncedFn } from "./player";
 
-const getSmartTips = (value: string) => QQmusicSDK.smartbox(value);
-const songList = ref<ISong[]>(
-  location.protocol === "https:"
-    ? []
-    : [
-        {
-          start: 0,
-          id: 1338414,
-          mid: "003hFxQh276Cv5",
-          name: "最佳损友",
-          singer: "陈奕迅",
-          pic: "https://y.gtimg.cn/music/photo_new/T002R300x300M000002FT46H18G1jW_4.jpg?max_age=2592000",
-          media_mid: "003C9fBv2K4x8b",
-        },
-        {
-          start: 0,
-          id: 260678,
-          mid: "003aAPj81VWrbL",
-          name: "富士山下",
-          singer: "陈奕迅",
-          pic: "https://y.gtimg.cn/music/photo_new/T002R300x300M000004Z85XP1c25b7_5.jpg?max_age=2592000",
-          media_mid: "001dXZ352YGvqU",
-          mv_mid: "k0012md5982",
-        },
-        {
-          start: 0,
-          id: 1331307,
-          mid: "000Cmo8Q2pBpZs",
-          name: "Merry-Go-Round of Life",
-          singer: "久石让",
-          pic: "https://y.gtimg.cn/music/photo_new/T002R300x300M0000000aeS72qwLag_2.jpg?max_age=2592000",
-          media_mid: "000BH1Ng2HFfvC",
-        },
-        {
-          start: 0,
-          id: 253968019,
-          mid: "002xbnUT2NiCIm",
-          name: "人生的旋转木马",
-          singer: "久石让",
-          pic: "https://y.gtimg.cn/music/photo_new/T002R300x300M000000bMJur4HuxyY_4.jpg?max_age=2592000",
-          media_mid: "002JzmZq3esxNS",
-        },
-        {
-          start: 0,
-          id: 1251167,
-          mid: "0029Zemv0kR1ur",
-          name: "葡萄成熟时",
-          singer: "陈奕迅",
-          pic: "https://y.gtimg.cn/music/photo_new/T002R300x300M000003J6fvc0bVJon_3.jpg?max_age=2592000",
-          media_mid: "000mVAmc4SRnnN",
-          mv_mid: "q0010Lj82uC",
-        },
-      ],
-);
-let kw = "";
-let curPageNum = 1;
+const kw = ref("");
+const smartTips = ref<string[]>([]);
+const songList = ref<ISong[]>([]);
 /** 是否可以发起下次搜索请求 */
 let canReqSearch = true;
-const submit = async (value: string, pageNum = 1) => {
+const submit = async (pageNum = 1) => {
+  smartTips.value = [];
   canReqSearch = false;
   // console.log("发起搜索", value, pageNum);
-  kw = value;
   curPageNum = pageNum;
-  const res = (await QQmusicSDK.search(value, pageNum, 20)).list.map(({ id, mid, name, singer, album, file, mv }) => ({
-    start: 0,
-    id,
-    mid,
-    name,
-    singer: singer.map(item => item.name).join("、"),
-    pic: QQmusicSDK.getMusicImgUrl(album.pmid),
-    media_mid: file.media_mid,
-    mv_mid: mv?.vid,
-  }));
+  const res = (await QQmusicSDK.search(kw.value, pageNum, 20)).list.map(
+    ({ id, mid, name, singer, album, file, mv }) => ({
+      start: 0,
+      id,
+      mid,
+      name,
+      singer: singer.map(item => item.name).join("、"),
+      pic: QQmusicSDK.getMusicImgUrl(album.pmid),
+      media_mid: file.media_mid,
+      mv_mid: mv?.vid,
+    }),
+  );
   const map = new Map(pageNum === 1 ? [] : songList.value.map(item => [item.id, item]));
   for (const item of res) map.set(item.id, item);
   songList.value = [...map.values()];
@@ -89,6 +39,17 @@ const submit = async (value: string, pageNum = 1) => {
   setTimeout(tryLoadMore, 100);
   if (res.length) canReqSearch = true;
 };
+
+const debounce = debouncedFn(async () => {
+  if (!kw.value) {
+    songList.value = [];
+    return;
+  }
+  smartTips.value = (await QQmusicSDK.smartbox(kw.value)) || [];
+}, 500);
+watch(kw, debounce);
+
+let curPageNum = 1;
 
 const songDetailPage = ref({ x: 0, y: 0 });
 const openSongDetailPage = (e?: any) => {
@@ -107,7 +68,7 @@ function tryLoadMore() {
   if (!appRef.value || !canReqSearch || !kw) return;
   const { scrollTop, scrollHeight, clientHeight } = appRef.value;
   if (scrollHeight - scrollTop - clientHeight > clientHeight * 0.5) return;
-  submit(kw, curPageNum + 1);
+  submit(curPageNum + 1);
 }
 </script>
 
@@ -115,8 +76,8 @@ function tryLoadMore() {
   <div class="app" @scroll="tryLoadMore" ref="appRef">
     <div class="container">
       <h1>鹏飞音乐</h1>
-      <SearchSong placeholder="搜索" :getSmartTips="getSmartTips" @submit="submit" />
-      <SongList :list="songList" :openSongDetailPage="openSongDetailPage" />
+      <SearchSong placeholder="搜索" :smartTips="smartTips" @submit="submit" v-model="kw" />
+      <SongList :kw="kw" :list="songList" :openSongDetailPage="openSongDetailPage" />
     </div>
   </div>
   <SongPlayer :x="songDetailPage.x" :y="songDetailPage.y" :openSongDetailPage="openSongDetailPage" />

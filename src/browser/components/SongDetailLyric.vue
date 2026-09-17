@@ -56,15 +56,20 @@ onUnmounted(() => {
     @wheel="setCDTime"
     @touchstart="moveStart"
   >
-    <div v-for="(line, index) in songInfo.lyric" :key="index" :class="{ lyric: lyric.lineIndex === index }">
+    <div
+      v-for="(line, lineIndex) in songInfo.lyric"
+      :key="songInfo.id + lineIndex"
+      :class="{ lyric: lyric.lineIndex === lineIndex }"
+    >
       <span
-        v-if="lyric.lineIndex === index"
-        v-for="ch in lyric.data"
+        v-if="lyric.lineIndex === lineIndex"
+        v-for="(ch, chIndex) in lyric.data"
         :style="{ animationDelay: `${ch.delay}ms`, animationDuration: `${ch.duration}ms` }"
-        :key="ch.html"
+        :key="ch.html + chIndex"
+        :data-html="ch.delay + '.' + chIndex"
         >{{ ch.text }}</span
       >
-      <span v-else v-for="ch in line" :key="ch.text + index">{{ ch.text }}</span>
+      <span v-else v-for="ch in line">{{ ch.text }}</span>
     </div>
   </div>
 </template>

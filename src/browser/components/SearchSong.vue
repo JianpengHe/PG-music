@@ -1,71 +1,35 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref } from "vue";
 import { Search, CloseOne } from "@icon-park/vue-next";
 export type SearchProps = {
   placeholder?: string;
-  getSmartTips?: (value: string) => Promise<string[]>;
+  smartTips: string[];
 };
 export type SearchEmits = {
   (e: "submit", value: string): void;
 };
-const { placeholder, getSmartTips } = defineProps<SearchProps>();
+const { placeholder, smartTips } = defineProps<SearchProps>();
+const kw = defineModel<string>();
 const emit = defineEmits<SearchEmits>();
 
 const inputRef = ref<HTMLInputElement>();
-const searchValue = ref("");
 
 const isFocused = ref(false);
-const smartTips = ref<string[]>([]);
-const debounce = debouncedFn(async () => {
-  smartTips.value = (await getSmartTips?.(searchValue.value)) || [];
-}, 500);
-watch(searchValue, debounce);
 
 function submit() {
   inputRef.value?.blur();
-  emit("submit", searchValue.value);
+
+  emit("submit", kw.value || "");
 }
 function reset() {
-  searchValue.value = "";
+  kw.value = "";
   inputRef.value?.focus();
 }
 
 function selectItem(item: string) {
   console.log("选择：", item);
-  searchValue.value = item;
-  smartTips.value = [];
-  submit();
-}
-
-function debouncedFn(callback: () => Promise<void>, minDelay = 500) {
-  let needCall = false;
-  let cdTime = 0;
-  let timer: ReturnType<typeof setTimeout> | null = null;
-  const handle = () => {
-    const now = performance.now();
-    if (now < cdTime) return scheduleNext();
-    needCall = false;
-    cdTime = Infinity;
-    callback().finally(() => {
-      cdTime = now + minDelay;
-      if (needCall) scheduleNext();
-    });
-  };
-  const scheduleNext = () => {
-    needCall = true;
-    if (cdTime === Infinity || timer !== null) return;
-    const delay = cdTime - performance.now() + 10;
-    if (delay > 0) {
-      timer = setTimeout(() => {
-        timer = null;
-        handle();
-      }, delay);
-    } else {
-      handle();
-    }
-  };
-
-  return handle;
+  kw.value = item;
+  setTimeout(submit);
 }
 </script>
 <template>
@@ -78,14 +42,14 @@ function debouncedFn(callback: () => Promise<void>, minDelay = 500) {
         ref="inputRef"
         type="text"
         name="search"
-        v-model="searchValue"
+        v-model="kw"
         @focus="isFocused = true"
         @blur="isFocused = false"
         :placeholder="placeholder || '请输入搜索内容'"
       />
-      <button v-show="!!searchValue" type="reset"><CloseOne theme="filled" /></button>
+      <button v-show="!!kw" type="reset"><CloseOne theme="filled" /></button>
     </div>
-    <div v-show="isFocused && searchValue" class="smart-tips">
+    <div v-show="isFocused && kw" class="smart-tips">
       <div v-for="item in smartTips" :key="item" @mousedown="selectItem(item)" @touchstart="selectItem(item)">
         {{ item }}
       </div>

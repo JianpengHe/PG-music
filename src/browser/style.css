@@ -131,7 +131,7 @@ span.i-icon {
 .song-detail-control-btns svg[width="20"] {
   color: var(--color-border-hover);
 }
-.song-detail-control-btns .i-icon.active svg {
+.i-icon.active svg {
   color: var(--color-primary) !important;
 }
 

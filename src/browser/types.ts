@@ -10,14 +10,16 @@ export type ISong = {
   media_mid: string;
   mv_mid?: string;
 };
-
-export type ISongInfo = ISong & { src: string; lyric: LyricToken[][] };
+type ISongPlayInfo = { src: string; srcExpire: number; lyric: LyricToken[][] };
+export type ISongInfo = ISong & ISongPlayInfo;
+export type ISongListItem = ISong & Partial<ISongPlayInfo> & { isTemp?: boolean };
 
 export type IEventList = {
-  setSong: ISongInfo;
+  setSong: ISongListItem;
   playSong: Pick<IEventList["setSong"], "id" | "start">;
   pauseSong: { reason: "user" | "end" | "load" };
   changeLyric: void;
+  changeSongList: Map<ISongInfo["id"], ISongListItem>;
 };
 
 type EventMap = {

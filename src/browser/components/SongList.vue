@@ -1,19 +1,23 @@
 <script setup lang="ts">
 import type { ISong } from "../types";
-import { PlayOne, Pause, Entertainment, AddMusic, MusicOne } from "@icon-park/vue-next";
+import { PlayOne, Pause, CollectionRecords, Like, MusicOne } from "@icon-park/vue-next";
 import { usePlaySongInfo } from "../hooks/usePlaySongInfo";
 import { myEvent } from "../event";
-import { formatLyricLine } from "../../api/common/lyricConvert";
-import { QQmusicSDK } from "../QQmusicSDK";
 import { player } from "../player";
 import { ref } from "vue";
+import { usePlaySongList } from "../hooks/usePlaySongList";
 
 export type SongListProps = {
+  kw: string;
   list: ISong[];
   openSongDetailPage: (e: any) => void;
 };
-const { list, openSongDetailPage } = defineProps<SongListProps>();
+const { kw, list, openSongDetailPage } = defineProps<SongListProps>();
 const { songInfo } = usePlaySongInfo();
+const songList = usePlaySongList(
+  data => new Map([...data.values()].filter(({ isTemp }) => isTemp !== true).map(item => [item.id, item])),
+);
+
 const setSong = async (item: ISong, e: MouseEvent) => {
   // @ts-ignore
   window.audioContext.state === "suspended" && window.audioContext.resume();
@@ -29,34 +33,45 @@ const setSong = async (item: ISong, e: MouseEvent) => {
     document.body.appendChild(node);
     node.addEventListener("animationend", () => node.remove());
   }
-  const [src, lyric] = await Promise.all([
-    QQmusicSDK.playURL(item.mid, `C400${item.media_mid}.m4a`),
-    QQmusicSDK.lyric(item.id),
+  const [song] = await Promise.all([
+    player.getSrcAndLyric(item),
     // QQmusicSDK.songDetail(item.mid),
     // QQmusicSDK.mvURL(item.mv_mid),
     new Promise(resolve => setTimeout(resolve, 360)),
   ]);
   player.audio.play();
-  myEvent.emit("setSong", { ...item, src, lyric: formatLyricLine(lyric, 5) });
+  myEvent.emit("setSong", song);
 };
 
 const iconTemplate = ref<HTMLElement>();
 </script>
 <template>
   <div class="song-list">
-    <div v-for="item in list" :key="item.id" class="song-item" @click="e => setSong(item, e)">
+    <div
+      v-for="item in kw ? list : [...songList.values()]"
+      :key="item.id"
+      class="song-item"
+      @click="e => setSong(item, e)"
+    >
       <img :src="item.pic" alt="" />
       <div class="song-item-info">
         <h3>{{ item.name }}</h3>
         <h4>{{ item.singer }}</h4>
       </div>
       <div class="song-item-icons">
-        <AddMusic size="20" />
+        <Like
+          v-if="songList.has(item.id)"
+          size="20"
+          theme="filled"
+          class="active"
+          @click.stop="player.deleteSong(item.id)"
+        />
+        <CollectionRecords v-else size="20" @click.stop="player.addSong(item)" />
         <Pause v-if="item.id === songInfo.id && songInfo.isPlaying" size="20" @click.stop="player.playOrPause()" />
         <PlayOne v-else size="20" />
       </div>
     </div>
-    <MusicOne theme="outline" size="24" style="display: none" ref="iconTemplate" class="icon-template" />
+    <MusicOne size="24" style="display: none" ref="iconTemplate" class="icon-template" />
   </div>
 </template>
 <style scoped>

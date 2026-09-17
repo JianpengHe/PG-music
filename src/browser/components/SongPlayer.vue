@@ -33,9 +33,10 @@ onMounted(() => myEvent.on("changeLyric", changeLyric));
       <h3>{{ songInfo.name }} - {{ songInfo.singer }}</h3>
       <h4 class="lyric">
         <span
-          v-for="ch in lyric.data"
+          v-for="(ch, chIndex) in lyric.data"
           :style="{ animationDelay: `${ch.delay}ms`, animationDuration: `${ch.duration}ms` }"
-          :key="ch.html"
+          :key="ch.html + chIndex"
+          :data-html="ch.delay + '.' + chIndex"
           >{{ ch.text }}</span
         >
       </h4>
