@@ -6,7 +6,7 @@ export type SearchProps = {
   smartTips: string[];
 };
 export type SearchEmits = {
-  (e: "submit", value: string): void;
+  (e: "submit"): void;
 };
 const { placeholder, smartTips } = defineProps<SearchProps>();
 const kw = defineModel<string>();
@@ -19,7 +19,7 @@ const isFocused = ref(false);
 function submit() {
   inputRef.value?.blur();
 
-  emit("submit", kw.value || "");
+  emit("submit");
 }
 function reset() {
   kw.value = "";
