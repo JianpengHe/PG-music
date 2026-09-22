@@ -1,24 +1,27 @@
 <script setup lang="ts">
 import SongDetail from "@/components/SongDetail.vue";
 import { Back } from "@icon-park/vue-next";
+import { IEventList } from "../types";
+import { onMounted, onUnmounted, ref } from "vue";
+import { myEvent } from "../event";
+import { Router, router } from "../router";
 
-export type SongDetailPageProps = {
-  x: number;
-  y: number;
-  openSongDetailPage: (e?: any) => void;
-};
+const openSongDetailPageData = ref<Router["openSongDetailPagePos"]>(router.openSongDetailPagePos);
+const sysBack = () => history.back();
 
-const { x, y, openSongDetailPage } = defineProps<SongDetailPageProps>();
-
-const sysBack = () => navigation.back();
+function openSongDetailPage() {
+  openSongDetailPageData.value = router.openSongDetailPagePos;
+}
+onMounted(() => myEvent.on("openSongDetailPage", openSongDetailPage));
+onUnmounted(() => myEvent.off("openSongDetailPage", openSongDetailPage));
 </script>
 <template>
   <Transition name="song-detail-page">
     <div
-      v-if="x && y"
+      v-if="openSongDetailPageData"
       :style="{
-        '--start-x': `${x}px`,
-        '--start-y': `${y}px`,
+        '--start-x': `${openSongDetailPageData.x}px`,
+        '--start-y': `${openSongDetailPageData.y}px`,
       }"
       class="song-detail-page"
       @contextmenu.prevent
@@ -27,7 +30,7 @@ const sysBack = () => navigation.back();
     >
       <Back theme="outline" size="24" class="back-icon" @click="sysBack" />
 
-      <SongDetail :openSongDetailPage="openSongDetailPage" />
+      <SongDetail />
     </div>
   </Transition>
 </template>

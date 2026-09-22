@@ -8,7 +8,7 @@ const audioContext =
   // @ts-ignore
   window.audioContext || (window.audioContext = new AudioContext({ sampleRate: 48000 }));
 // window.addEventListener("click", () => audioContext.state === "suspended" && audioContext.resume(), true);
-class Player {
+export class Player {
   public readonly songListMap: IEventList["changeSongList"] = new Map(
     JSON.parse(localStorage.getItem("songList") || "[]").map((item: any) => [item.id, item]),
   );
@@ -137,6 +137,7 @@ class Player {
         // this.audio.poster = detail.pic;
         this.audio.style.display = "none";
         // this.audio.dataset.src = detail.src;
+        myEvent.emit("loadSong", undefined);
       });
     });
   }

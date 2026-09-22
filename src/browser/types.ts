@@ -16,10 +16,12 @@ export type ISongListItem = ISong & Partial<ISongPlayInfo> & { isTemp?: boolean 
 
 export type IEventList = {
   setSong: ISongListItem;
+  loadSong: void;
   playSong: Pick<IEventList["setSong"], "id" | "start">;
   pauseSong: { reason: "user" | "end" | "load" };
   changeLyric: void;
   changeSongList: Map<ISongInfo["id"], ISongListItem>;
+  openSongDetailPage: void; //: { clientX: number; clientY: number } | null;
 };
 
 type EventMap = {

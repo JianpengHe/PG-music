@@ -5,28 +5,40 @@ import { player } from "../player";
 import { onMounted, onUnmounted, ref } from "vue";
 import { myEvent } from "../event";
 import { LyricShow } from "../../api/common/lyricConvert";
+import { router } from "../router";
 
 const { songInfo } = usePlaySongInfo();
-const { x, y, openSongDetailPage } = defineProps<{
-  x: number;
-  y: number;
-  openSongDetailPage: (e: any) => void;
-}>();
 
+const isOpenOpenSongDetailPage = ref<boolean>(Boolean(router.openSongDetailPagePos));
 const lyric = ref<LyricShow["lyricData"]>(player.lyricShow.lyricData);
+
+function openSongDetailPage() {
+  isOpenOpenSongDetailPage.value = Boolean(router.openSongDetailPagePos);
+}
+
 function changeLyric() {
-  if (x && y) return;
+  if (isOpenOpenSongDetailPage.value) return;
   lyric.value = player.lyricShow.lyricData;
 }
-onUnmounted(() => myEvent.off("changeLyric", changeLyric));
-onMounted(() => myEvent.on("changeLyric", changeLyric));
+
+onMounted(() => {
+  myEvent.on("openSongDetailPage", openSongDetailPage);
+  myEvent.on("changeLyric", changeLyric);
+});
+
+onUnmounted(() => {
+  myEvent.off("openSongDetailPage", openSongDetailPage);
+  myEvent.off("changeLyric", changeLyric);
+});
 </script>
 <template>
   <div
     class="song-item"
     :class="{ musicPlaying: songInfo.isPlaying }"
-    :style="!!songInfo.id && !x && !y ? 'transform: translate(-50%, 0)' : 'transform: translate(-50%, 120%)'"
-    @click="openSongDetailPage"
+    :style="
+      !!songInfo.id && !isOpenOpenSongDetailPage ? 'transform: translate(-50%, 0)' : 'transform: translate(-50%, 120%)'
+    "
+    @click="router.openSongDetailPage"
   >
     <img :src="songInfo.pic" alt="" />
     <div class="song-item-info">
@@ -42,8 +54,8 @@ onMounted(() => myEvent.on("changeLyric", changeLyric));
       </h4>
     </div>
     <div class="song-item-icons">
-      <Pause v-if="songInfo.isPlaying" size="36" @click.stop="player.playOrPause()" />
-      <PlayOne v-else size="36" @click.stop="player.playOrPause()" />
+      <Pause v-if="songInfo.isPlaying" size="36" @click.stop="player.playOrPause" />
+      <PlayOne v-else size="36" @click.stop="player.playOrPause" />
     </div>
   </div>
 </template>

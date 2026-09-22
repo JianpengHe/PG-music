@@ -6,23 +6,23 @@ import { myEvent } from "../event";
 import { player } from "../player";
 import { ref } from "vue";
 import { usePlaySongList } from "../hooks/usePlaySongList";
+import { router } from "../router";
 
 export type SongListProps = {
   kw: string;
   list: ISong[];
-  openSongDetailPage: (e: any) => void;
 };
-const { kw, list, openSongDetailPage } = defineProps<SongListProps>();
+const { kw, list } = defineProps<SongListProps>();
 const { songInfo } = usePlaySongInfo();
 const songList = usePlaySongList(
   data => new Map([...data.values()].filter(({ isTemp }) => isTemp !== true).map(item => [item.id, item])),
 );
 
-const setSong = async (item: ISong, e: MouseEvent) => {
+const setSong = async (item: ISong, e: PointerEvent) => {
   // @ts-ignore
   window.audioContext.state === "suspended" && window.audioContext.resume();
 
-  if (item.id === songInfo.value.id) return openSongDetailPage(e);
+  if (item.id === songInfo.value.id) return router.openSongDetailPage(e);
 
   if (iconTemplate.value) {
     const node = (iconTemplate.value as any).$el.cloneNode(true) as HTMLElement;

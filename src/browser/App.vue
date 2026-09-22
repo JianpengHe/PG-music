@@ -51,18 +51,6 @@ watch(kw, debounce);
 
 let curPageNum = 1;
 
-const songDetailPage = ref({ x: 0, y: 0 });
-const openSongDetailPage = (e?: any) => {
-  if (e) {
-    songDetailPage.value = {
-      x: e.clientX - innerWidth / 2,
-      y: e.clientY - innerHeight / 2,
-    };
-    return;
-  }
-  songDetailPage.value = { x: 0, y: 0 };
-};
-
 const appRef = ref<HTMLDivElement>();
 function tryLoadMore() {
   if (!appRef.value || !canReqSearch || !kw) return;
@@ -77,11 +65,11 @@ function tryLoadMore() {
     <div class="container">
       <h1>鹏飞音乐</h1>
       <SearchSong placeholder="搜索" :smartTips="smartTips" @submit="submit" v-model="kw" />
-      <SongList :kw="kw" :list="songList" :openSongDetailPage="openSongDetailPage" />
+      <SongList :kw="kw" :list="songList" />
     </div>
   </div>
-  <SongPlayer :x="songDetailPage.x" :y="songDetailPage.y" :openSongDetailPage="openSongDetailPage" />
-  <SongDetailPage :x="songDetailPage.x" :y="songDetailPage.y" :openSongDetailPage="openSongDetailPage" />
+  <SongPlayer />
+  <SongDetailPage />
 </template>
 <style scoped>
 .app {
