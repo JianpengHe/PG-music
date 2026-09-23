@@ -54,8 +54,8 @@ onUnmounted(() => {
       </h4>
     </div>
     <div class="song-item-icons">
-      <Pause v-if="songInfo.isPlaying" size="36" @click.stop="player.playOrPause" />
-      <PlayOne v-else size="36" @click.stop="player.playOrPause" />
+      <Pause v-if="songInfo.isPlaying" size="36" @click.stop="player.playOrPause()" />
+      <PlayOne v-else size="36" @click.stop="player.playOrPause()" />
     </div>
   </div>
 </template>

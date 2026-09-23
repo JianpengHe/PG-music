@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import SongDetail from "@/components/SongDetail.vue";
 import { Back } from "@icon-park/vue-next";
-import { IEventList } from "../types";
 import { onMounted, onUnmounted, ref } from "vue";
 import { myEvent } from "../event";
 import { Router, router } from "../router";
+import SongDetailDownload from "./SongDetailDownload.vue";
 
 const openSongDetailPageData = ref<Router["openSongDetailPagePos"]>(router.openSongDetailPagePos);
 const sysBack = () => history.back();
@@ -28,19 +28,16 @@ onUnmounted(() => myEvent.off("openSongDetailPage", openSongDetailPage));
       @selectstart.prevent
       @dragstart.prevent
     >
-      <Back theme="outline" size="24" class="back-icon" @click="sysBack" />
+      <div class="song-detail-page-header">
+        <Back theme="outline" size="24" @click="sysBack" />
+        <SongDetailDownload />
+      </div>
 
       <SongDetail />
     </div>
   </Transition>
 </template>
 <style scoped>
-.back-icon {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 9999;
-}
 .song-detail-page {
   position: fixed;
   top: 0;
@@ -51,6 +48,20 @@ onUnmounted(() => myEvent.off("openSongDetailPage", openSongDetailPage));
   height: 100dvh;
   z-index: 9999;
   overflow: hidden;
+}
+
+.song-detail-page-header {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+.i-icon {
+  margin: 12px;
 }
 
 /* 进入 */

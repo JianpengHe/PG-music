@@ -3,7 +3,11 @@ import { formatLyricLine, LyricShow } from "../api/common/lyricConvert";
 import type { IEventList, ISong, ISongInfo, ISongListItem } from "./types";
 import { myEvent } from "./event";
 import { QQmusicSDK } from "./QQmusicSDK";
-
+const songQualityMap: Record<string, string[]> = {
+  size_96aac: ["流畅", "ACC", "C4", "m4a"],
+  size_320mp3: ["高品", "MP3", "M8", "mp3"],
+  size_flac: ["无损", "FLAC", "F0", "flac"],
+};
 const audioContext =
   // @ts-ignore
   window.audioContext || (window.audioContext = new AudioContext({ sampleRate: 48000 }));
@@ -165,8 +169,11 @@ export class Player {
     return !this.audio.paused && !this.audio.ended;
   }
   public async getSrcAndLyric(song: ISong): Promise<ISongInfo> {
+    const q = new URL(window.location.href).searchParams.get("q");
+    const songQuality = (q ? songQualityMap[`size_${q}`] : undefined) ?? Object.values(songQualityMap)[0];
+
     const [src, lyric] = await Promise.all([
-      QQmusicSDK.playURL(song.mid, `C400${song.media_mid}.m4a`),
+      QQmusicSDK.playURL(song.mid, `${songQuality[2]}00${song.media_mid}.${songQuality[3]}`),
       QQmusicSDK.lyric(song.id),
       // QQmusicSDK.songDetail(item.mid),
       // QQmusicSDK.mvURL(item.mv_mid),
