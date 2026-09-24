@@ -46,6 +46,7 @@ function selectItem(item: string) {
         @focus="isFocused = true"
         @blur="isFocused = false"
         :placeholder="placeholder || '请输入搜索内容'"
+        @keydown.stop
       />
       <button v-show="!!kw" type="reset"><CloseOne theme="filled" /></button>
     </div>
