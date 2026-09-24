@@ -15,23 +15,28 @@ export type IQQmusicAPIDataStorage = {
 const QQmusicAPIDataStorage: IQQmusicAPIDataStorage = {
   url: {
     data: {},
-    read: val =>
-      Object.fromEntries(
+    read: val => {
+      const now = Math.floor(Date.now() / 1000);
+      return Object.fromEntries(
         String(val || "")
           .split("\n")
           .map(item => {
             const expire = Number(item.substring(0, 10));
             const url = item.substring(10) || "";
             const file = url.match(/\/([^?/]+)\?/)?.[1] ?? "";
-            if (!expire || !file || !url) return null;
+            if (!expire || !file || !url || expire < now) return null;
             return [file, { url, file, expire }];
           })
           .filter(Boolean) as any,
-      ),
-    write: obj =>
-      Object.values(obj)
+      );
+    },
+    write: obj => {
+      const now = Math.floor(Date.now() / 1000);
+      return Object.values(obj)
+        .filter(({ expire }) => expire > now)
         .map(({ url, expire }) => `${expire}${url}`)
-        .join("\n"),
+        .join("\n");
+    },
   },
 };
 
@@ -166,7 +171,7 @@ export class QQmusicAPI {
       const res = await fetch(this.serverUrl + "/play/" + fileName + ".vkey?songmid=" + songmid);
       const body = await res.json();
       purl = body.purl;
-      expire = Math.floor(new Date(res.headers.get("Expires") ?? new Date()).getTime() / 1000) - 400;
+      expire = Math.floor(new Date(res.headers.get("Expires") ?? new Date()).getTime() / 1000);
     }
     if (!purl) throw new Error("获取播放URL失败");
     purl = "https://ws.stream.qqmusic.qq.com/" + purl;
