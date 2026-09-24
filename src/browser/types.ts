@@ -9,6 +9,7 @@ export type ISong = {
   pic: string;
   media_mid: string;
   mv_mid?: string;
+  album_name: string;
 };
 type ISongPlayInfo = { src: string; srcExpire: number; lyric: LyricToken[][] };
 export type ISongInfo = ISong & ISongPlayInfo;

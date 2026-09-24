@@ -16,7 +16,7 @@ import { usePlaySongInfo } from "../hooks/usePlaySongInfo";
 import { myEvent } from "../event";
 import { QQmusicSDK } from "../QQmusicSDK";
 import { player } from "../player";
-import { onMounted, onUnmounted, ref } from "vue";
+import { onUnmounted, ref, watch } from "vue";
 import SongDetailProgress from "./SongDetailProgress.vue";
 import SongDetailVolume from "./SongDetailVolume.vue";
 const { songInfo } = usePlaySongInfo();
@@ -65,6 +65,12 @@ function setVolume(value: boolean) {
 //     target = target.parentElement;
 //   }
 // }
+watch(
+  () => songInfo.value.id,
+  id => {
+    isMV.value = false;
+  },
+);
 onUnmounted(() => {
   // window.removeEventListener("cilck", closeVolume);
   if (isMV.value) myEvent.emit("setSong", songInfo.value as any);

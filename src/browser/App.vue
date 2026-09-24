@@ -31,6 +31,7 @@ const submit = async (pageNum = 1) => {
       pic: QQmusicSDK.getMusicImgUrl(album.pmid),
       media_mid: file.media_mid,
       mv_mid: mv?.vid,
+      album_name: album.name || name,
     }),
   );
   const map = new Map(pageNum === 1 ? [] : songList.value.map(item => [item.id, item]));
@@ -94,6 +95,7 @@ function tryLoadMore() {
   margin-top: 24px;
   width: 100vmin;
   width: 100dvmin;
+  min-width: 375px;
   position: absolute;
 }
 .container > h1 {

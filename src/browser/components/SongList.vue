@@ -92,6 +92,8 @@ const iconTemplate = ref<HTMLElement>();
   gap: 12px;
   padding: 16px;
   box-sizing: border-box;
+  height: 80px;
+  overflow: hidden;
 }
 .song-item > img {
   width: 48px;
@@ -100,6 +102,7 @@ const iconTemplate = ref<HTMLElement>();
 }
 .song-item-info {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -111,12 +114,23 @@ const iconTemplate = ref<HTMLElement>();
   line-height: 24px;
   font-weight: 500;
   color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
 }
 .song-item-info > h4 {
   font-size: 14px;
   line-height: 16px;
   font-weight: 300;
   color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  word-break: break-all;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2; /* 这里是超出几行省略 */
 }
 h3,
 h4 {

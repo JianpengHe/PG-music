@@ -74,6 +74,7 @@ onUnmounted(() => {
   box-sizing: border-box;
   box-shadow: 0px 0px 12px 1px var(--color-shadow);
   width: calc(100vmin - 24px);
+  min-width: 375px;
   backdrop-filter: blur(12px);
   background-color: rgba(247, 248, 252, 0.66);
   z-index: 10000;
@@ -94,6 +95,7 @@ onUnmounted(() => {
 }
 .song-item-info {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -106,12 +108,21 @@ onUnmounted(() => {
   line-height: 16px;
   font-weight: 500;
   color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
 }
 .song-item-info > h4 {
   font-size: 14px;
   line-height: 14px;
   font-weight: 450;
   color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+  text-align: left;
 }
 h3,
 h4 {
