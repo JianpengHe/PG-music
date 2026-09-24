@@ -78,6 +78,7 @@ export class Player {
       media_mid: song.media_mid,
       mv_mid: song.mv_mid,
       album_name: song.album_name,
+      quicklyPos: song.quicklyPos,
     }));
     setLocalStorage(ELocalStorageKey.SongList, JSON.stringify(songList));
   }

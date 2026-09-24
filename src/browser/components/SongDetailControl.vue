@@ -101,7 +101,7 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
-    <SongDetailProgress />
+    <SongDetailProgress :quicklyPos="songInfo.quicklyPos || []" />
     <div class="song-detail-control-btns song-detail-control-main-btn">
       <PlayCycle v-if="playType === EPlayType.Normal" size="20" @click="togglePlayType" />
       <PlayOnce v-if="playType === EPlayType.Loop" size="20" @click="togglePlayType" />

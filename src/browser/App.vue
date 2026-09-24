@@ -22,7 +22,7 @@ const submit = async (pageNum = 1) => {
   // console.log("发起搜索", value, pageNum);
   curPageNum = pageNum;
   const res = (await QQmusicSDK.search(kw.value, pageNum, numPerPage)).list.map(
-    ({ id, mid, name, singer, album, file, mv }) => ({
+    ({ id, mid, name, singer, album, file, mv, vi }) => ({
       start: 0,
       id,
       mid,
@@ -32,6 +32,8 @@ const submit = async (pageNum = 1) => {
       media_mid: file.media_mid,
       mv_mid: mv?.vid,
       album_name: album.name || name,
+      /** 高潮时间点 */
+      quicklyPos: [vi?.[4]].filter(Boolean),
     }),
   );
   const map = new Map(pageNum === 1 ? [] : songList.value.map(item => [item.id, item]));

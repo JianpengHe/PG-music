@@ -94,6 +94,7 @@ export class QQmusicAPI {
         media_mid: string;
       };
       mv: { id: number; vid: string };
+      vi: number[];
     }[];
   }> {
     let o = { sum: 0, list: [] };

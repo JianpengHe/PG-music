@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { player } from "../player";
 import { onMounted, onUnmounted, ref } from "vue";
-
+export type SongDetailProgressProps = {
+  quicklyPos: number[];
+};
+const { quicklyPos } = defineProps<SongDetailProgressProps>();
 const duration = ref(0);
 const currentTime = ref(0);
 const isDragging = ref(false);
@@ -71,9 +74,21 @@ onUnmounted(() => {
     <div class="song-detail-progress-time">
       {{ formatTime(currentTime) }}
     </div>
-    <div class="song-detail-progress-bar" @pointerdown="moveStart" :style="{ '--progress': `${progress()}%` }">
+    <div
+      class="song-detail-progress-bar"
+      @pointerdown="moveStart"
+      :style="{ '--progress': `${progress()}%`, '--duration': `${duration}` }"
+    >
       <div class="song-detail-progress-bar-line song-detail-progress-bar-none"></div>
       <div class="song-detail-progress-bar-line song-detail-progress-bar-fill"></div>
+      <div
+        v-for="pos in quicklyPos"
+        :key="pos"
+        class="song-detail-progress-bar-quickly-pos"
+        @pointerdown.stop
+        :style="{ '--quickly-pos': pos / 1000 }"
+        @click="() => (player.audio.currentTime = pos / 1000)"
+      ></div>
       <div class="song-detail-progress-bar-ball"></div>
     </div>
     <div class="song-detail-progress-time">
@@ -126,5 +141,26 @@ onUnmounted(() => {
   top: 50%;
   left: var(--progress);
   transform: translate(-50%, -50%);
+}
+.song-detail-progress-bar-quickly-pos {
+  top: 50%;
+  left: calc(var(--quickly-pos, 0) / var(--duration) * 100%);
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+  position: absolute;
+
+  /* margin: 9px; */
+}
+.song-detail-progress-bar-quickly-pos::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-border);
 }
 </style>

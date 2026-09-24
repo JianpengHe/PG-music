@@ -10,6 +10,7 @@ export type ISong = {
   media_mid: string;
   mv_mid?: string;
   album_name: string;
+  quicklyPos: number[];
 };
 type ISongPlayInfo = { src: string; srcExpire: number; lyric: LyricToken[][] };
 export type ISongInfo = ISong & ISongPlayInfo;
