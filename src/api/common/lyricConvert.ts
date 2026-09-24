@@ -472,10 +472,14 @@ export class LyricShow {
    * 与 当前行第一个字的开始时间
    * 的「中点时间」（人为提前一点用于观感）
    */
-  private readonly lineShowTimeList: number[] = [];
+  public readonly lineShowTimeList: number[] = [];
 
   /** 当前正在显示的歌词行索引 */
-  // private currentLineIndex = -1;
+  public get currentLineIndex() {
+    const currentTimeMs = this.getCurrentTimeAndPaused().currentTime * 1000;
+    if (!this.lyricLines[0]?.[0] || currentTimeMs < this.lyricLines[0][0].absoluteTime) return -1;
+    return this.lineShowTimeList.findIndex(time => currentTimeMs < time);
+  }
 
   /** 当前用于歌词调度的唯一计时器 */
   private timer = 0;
@@ -527,7 +531,6 @@ export class LyricShow {
      */
     this.lineShowTimeList.push(Infinity);
 
-    // this.currentLineIndex = -1;
     this.onLyricLineChange();
 
     console.log(this.lineShowTimeList, this.lyricLines);

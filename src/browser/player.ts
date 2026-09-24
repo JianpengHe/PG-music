@@ -60,6 +60,7 @@ export class Player {
       pic: song.pic,
       media_mid: song.media_mid,
       mv_mid: song.mv_mid,
+      album_name: song.album_name,
     }));
     localStorage.setItem("songList", JSON.stringify(songList));
   }
@@ -145,6 +146,14 @@ export class Player {
         // this.audio.poster = detail.pic;
         this.audio.style.display = "none";
         // this.audio.dataset.src = detail.src;
+        if ("mediaSession" in navigator) {
+          navigator.mediaSession.metadata = new MediaMetadata({
+            title: songInfo.name,
+            artist: songInfo.singer,
+            album: songInfo.album_name || songInfo.name,
+            artwork: [{ src: songInfo.pic }],
+          });
+        }
         myEvent.emit("loadSong", undefined);
       });
     });
@@ -192,6 +201,54 @@ export class Player {
 // window.audioPlus = audioPlus;
 
 export const player = new Player();
+
+if ("mediaSession" in navigator) {
+  navigator.mediaSession.setActionHandler("play", () => player.playOrPause());
+  navigator.mediaSession.setActionHandler("pause", () => player.playOrPause());
+  navigator.mediaSession.setActionHandler("previoustrack", () => player.prevSong());
+  navigator.mediaSession.setActionHandler("nexttrack", () => player.nextSong());
+  navigator.mediaSession.setActionHandler("seekto", details => {
+    if (details.seekTime == null) return;
+    player.audio.currentTime = details.seekTime;
+  });
+
+  navigator.mediaSession.setActionHandler("seekbackward", details => {
+    const offset = details.seekOffset ?? 10;
+    player.audio.currentTime = Math.max(0, player.audio.currentTime - offset);
+  });
+
+  navigator.mediaSession.setActionHandler("seekforward", details => {
+    const offset = details.seekOffset ?? 10;
+    player.audio.currentTime = Math.min(player.audio.duration, player.audio.currentTime + offset);
+  });
+}
+
+window.addEventListener("keydown", e => {
+  const currentSong = player.currentSong;
+  if (!currentSong) return;
+  console.log(e.code, e.ctrlKey);
+  switch (e.code) {
+    case "Space":
+      player.playOrPause();
+      break;
+    case "ArrowRight":
+    case "ArrowLeft":
+      const xs = e.code === "ArrowLeft" ? -1 : 1;
+      const time = e.ctrlKey
+        ? undefined
+        : currentSong.lyric?.[player.lyricShow.currentLineIndex + xs]?.[0]?.absoluteTime;
+      player.audio.currentTime = time ? time / 1000 : player.audio.currentTime + (e.ctrlKey ? 10 : 5) * xs;
+    case "ArrowDown":
+      player.audioPlus.volume = Math.max(0, player.audioPlus.volume - (e.ctrlKey ? 0.2 : 0.1));
+      break;
+    case "ArrowUp":
+      player.audioPlus.volume = Math.min(1, player.audioPlus.volume + (e.ctrlKey ? 0.2 : 0.1));
+      break;
+    case "KeyM":
+      player.audioPlus.volume = 0;
+      break;
+  }
+});
 
 export function debouncedFn(callback: () => Promise<void>, minDelay = 500) {
   let needCall = false;
