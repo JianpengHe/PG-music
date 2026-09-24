@@ -28,8 +28,9 @@ export class QQmusicBrowserSDK extends QQmusicAPI {
   constructor(
     protected readonly serverUrl: string,
     private readonly cdnUrl: string = serverUrl,
+    storagePath?: string,
   ) {
-    super(serverUrl);
+    super(serverUrl, storagePath || "");
   }
   protected request(method: string, module: string, param: any): Promise<{ code: number; data: any }> {
     // if (needLoginMethods.includes(method)) return this.serverQueue.add(method, module, param);

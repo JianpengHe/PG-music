@@ -12,7 +12,7 @@ export enum ELocalStorageKey {
   SongList = "songList",
   PlayType = "playType",
 }
-const LocalStorageKeyPrefix = "PG-music-";
+export const LocalStorageKeyPrefix = "PG-music-";
 export const getLocalStorage = (key: ELocalStorageKey) => localStorage.getItem(LocalStorageKeyPrefix + key);
 export const setLocalStorage = (key: ELocalStorageKey, value: string) =>
   localStorage.setItem(LocalStorageKeyPrefix + key, value);

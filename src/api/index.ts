@@ -1,3 +1,4 @@
+import { DataStorage, IDataStorage } from "../../../code-snippet/common/DataStorage";
 import { encodeLyricToken } from "./common/lyricConvert";
 import { lyricDecoder } from "./common/lyricDecoder";
 import {
@@ -8,9 +9,40 @@ import {
   QQserverUrlSmartbox,
   uint8ArrayToString,
 } from "./common/utils";
+export type IQQmusicAPIDataStorage = {
+  url: IDataStorage<Record<string, { url: string; file: string; expire: number }>>;
+};
+const QQmusicAPIDataStorage: IQQmusicAPIDataStorage = {
+  url: {
+    data: {},
+    read: val =>
+      Object.fromEntries(
+        String(val || "")
+          .split("\n")
+          .map(item => {
+            const expire = Number(item.substring(0, 10));
+            const url = item.substring(10) || "";
+            const file = url.match(/\/([^?/]+)\?/)?.[1] ?? "";
+            if (!expire || !file || !url) return null;
+            return [file, { url, file, expire }];
+          })
+          .filter(Boolean) as any,
+      ),
+    write: obj =>
+      Object.values(obj)
+        .map(({ url, expire }) => `${expire}${url}`)
+        .join("\n"),
+  },
+};
 
 export class QQmusicAPI {
-  constructor(protected readonly serverUrl: string) {}
+  protected readonly storage: DataStorage<IQQmusicAPIDataStorage>;
+  constructor(
+    protected readonly serverUrl: string,
+    storagePath?: string,
+  ) {
+    this.storage = new DataStorage(QQmusicAPIDataStorage, storagePath || "");
+  }
   protected request(method: string, module: string, param: any): Promise<{ code: number; data: any }> {
     throw new Error("Method not implemented.");
   }
@@ -115,6 +147,8 @@ export class QQmusicAPI {
   }
 
   public async playURL(songmid: string, fileName: string) {
+    const urlMap = this.storage.get("url");
+    if (urlMap[fileName] && urlMap[fileName].expire > Math.floor(Date.now() / 1000)) return urlMap[fileName].url;
     const { data } = await this.request("CgiGetVkey", "vkey.GetVkeyServer", {
       guid: "1",
       songmid: [songmid],
@@ -124,14 +158,21 @@ export class QQmusicAPI {
       loginflag: 1,
       platform: "20",
     });
-    //
-    let purl = data?.midurlinfo?.[0]?.purl;
+
+    const { midurlinfo, expiration } = data || {};
+    let purl = midurlinfo?.[0]?.purl;
+    let expire = expiration + Math.floor(Date.now() / 1000) - 400;
     if (!purl && !isServer) {
-      const res = await (await fetch(this.serverUrl + "/play/" + fileName + ".vkey?songmid=" + songmid)).json();
-      purl = res.purl;
+      const res = await fetch(this.serverUrl + "/play/" + fileName + ".vkey?songmid=" + songmid);
+      const body = await res.json();
+      purl = body.purl;
+      expire = Math.floor(new Date(res.headers.get("Expires") ?? new Date()).getTime() / 1000) - 400;
     }
     if (!purl) throw new Error("获取播放URL失败");
-    return "https://ws.stream.qqmusic.qq.com/" + purl;
+    purl = "https://ws.stream.qqmusic.qq.com/" + purl;
+    urlMap[fileName] = { url: purl, expire, file: fileName };
+    this.storage.set("url", urlMap);
+    return purl;
   }
 
   public async songDetail(song_mid: string) {
