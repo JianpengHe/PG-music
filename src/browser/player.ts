@@ -3,18 +3,15 @@ import { formatLyricLine, LyricShow } from "../api/common/lyricConvert";
 import type { IEventList, ISong, ISongInfo, ISongListItem } from "./types";
 import { myEvent } from "./event";
 import { QQmusicSDK } from "./QQmusicSDK";
-const songQualityMap: Record<string, string[]> = {
-  size_96aac: ["流畅", "ACC", "C4", "m4a"],
-  size_320mp3: ["高品", "MP3", "M8", "mp3"],
-  size_flac: ["无损", "FLAC", "F0", "flac"],
-};
+import { ELocalStorageKey, EPlayType, getLocalStorage, setLocalStorage, songQualityMap } from "./util";
+
 const audioContext =
   // @ts-ignore
   window.audioContext || (window.audioContext = new AudioContext({ sampleRate: 48000 }));
 // window.addEventListener("click", () => audioContext.state === "suspended" && audioContext.resume(), true);
 export class Player {
   public readonly songListMap: IEventList["changeSongList"] = new Map(
-    JSON.parse(localStorage.getItem("songList") || "[]").map((item: any) => [item.id, item]),
+    JSON.parse(getLocalStorage(ELocalStorageKey.SongList) || "[]").map((item: any) => [item.id, item]),
   );
   private currentSongId: ISongInfo["id"] = 0;
   public get currentSong() {
@@ -27,18 +24,38 @@ export class Player {
   public readonly audio: HTMLVideoElement = document.createElement("video");
   // @ts-ignore
   public readonly audioPlus = new AudioPlus(this.audio, audioContext);
-  public playType: "normal" | "loop" = "normal";
+  public playType: EPlayType = Number(getLocalStorage(ELocalStorageKey.PlayType) ?? EPlayType.Normal) as EPlayType;
+  public changePlayType() {
+    this.playType = (this.playType + 1) % Object.keys(EPlayType).filter(key => /^\d+$/.test(key)).length;
+    setLocalStorage(ELocalStorageKey.PlayType, String(this.playType));
+    return this.playType;
+  }
   public nextSong() {
-    const songs = [...this.songListMap.keys()];
-    const currentSongId =
-      songs[(songs.indexOf(this.currentSongId) + (this.playType === "loop" ? 0 : 1)) % songs.length];
-    myEvent.emit("setSong", this.songListMap.get(currentSongId)!);
+    return this.changeSong(true);
   }
   public prevSong() {
+    return this.changeSong(false);
+  }
+  private changeSong(isNext: boolean) {
     const songs = [...this.songListMap.keys()];
-    const currentSongId =
-      songs[(songs.indexOf(this.currentSongId) + (this.playType === "loop" ? 0 : songs.length - 1)) % songs.length];
-    myEvent.emit("setSong", this.songListMap.get(currentSongId)!);
+    const oldSongsIndex = songs.indexOf(this.currentSongId);
+    let songsIndex = 0;
+    switch (this.playType) {
+      case EPlayType.Normal:
+        songsIndex = (oldSongsIndex + (isNext ? 1 : songs.length - 1)) % songs.length;
+        break;
+      case EPlayType.Loop:
+        songsIndex = oldSongsIndex;
+        break;
+      case EPlayType.Random:
+        do {
+          songsIndex = Math.floor(Math.random() * songs.length);
+        } while (songs.length > 1 && songsIndex === oldSongsIndex);
+        break;
+    }
+    const song = this.songListMap.get(songs[songsIndex]);
+    if (song) myEvent.emit("setSong", song);
+    return song;
   }
 
   // public addOrDeleteSong(song: ISongListItem) {
@@ -62,7 +79,7 @@ export class Player {
       mv_mid: song.mv_mid,
       album_name: song.album_name,
     }));
-    localStorage.setItem("songList", JSON.stringify(songList));
+    setLocalStorage(ELocalStorageKey.SongList, JSON.stringify(songList));
   }
   public deleteSong(id: ISongInfo["id"]) {
     if (id !== this.currentSongId) {
@@ -226,7 +243,7 @@ if ("mediaSession" in navigator) {
 window.addEventListener("keydown", e => {
   const currentSong = player.currentSong;
   if (!currentSong) return;
-  console.log(e.code, e.ctrlKey);
+  // console.log(e.code, e.ctrlKey);
   switch (e.code) {
     case "Space":
       player.playOrPause();
@@ -250,34 +267,3 @@ window.addEventListener("keydown", e => {
       break;
   }
 });
-
-export function debouncedFn(callback: () => Promise<void>, minDelay = 500) {
-  let needCall = false;
-  let cdTime = 0;
-  let timer: ReturnType<typeof setTimeout> | null = null;
-  const handle = () => {
-    const now = performance.now();
-    if (now < cdTime) return scheduleNext();
-    needCall = false;
-    cdTime = Infinity;
-    callback().finally(() => {
-      cdTime = now + minDelay;
-      if (needCall) scheduleNext();
-    });
-  };
-  const scheduleNext = () => {
-    needCall = true;
-    if (cdTime === Infinity || timer !== null) return;
-    const delay = cdTime - performance.now() + 10;
-    if (delay > 0) {
-      timer = setTimeout(() => {
-        timer = null;
-        handle();
-      }, delay);
-    } else {
-      handle();
-    }
-  };
-
-  return handle;
-}

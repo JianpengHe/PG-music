@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { Download } from "@icon-park/vue-next";
-import { IEventList } from "../types";
 import { onMounted, onUnmounted, ref } from "vue";
 import { myEvent } from "../event";
-import { DownloadItem, downloader } from "../downloader";
+import { downloader } from "../downloader";
 
 // const downloadItem = ref<DownloadItem | undefined>(downloader.getDownloadItems());
 const downloadProgress = ref<HTMLDivElement>();

@@ -8,7 +8,7 @@ import SongDetailPage from "@/components/SongDetailPage.vue";
 import type { ISong } from "./types";
 import { ref, watch } from "vue";
 import { QQmusicSDK } from "./QQmusicSDK";
-import { debouncedFn } from "./player";
+import { debouncedFn } from "./util";
 
 const numPerPage = Math.min(Math.max(Math.round(((innerHeight / 80) * 2) / 10) * 10, 10), 40);
 const kw = ref("");

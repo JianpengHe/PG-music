@@ -11,18 +11,22 @@ import {
   VideoTwo,
   VolumeNotice,
   PlayOnce,
+  ShuffleOne,
 } from "@icon-park/vue-next";
 import { usePlaySongInfo } from "../hooks/usePlaySongInfo";
 import { myEvent } from "../event";
 import { QQmusicSDK } from "../QQmusicSDK";
 import { player } from "../player";
+import { EPlayType } from "../util";
 import { onUnmounted, ref, watch } from "vue";
 import SongDetailProgress from "./SongDetailProgress.vue";
 import SongDetailVolume from "./SongDetailVolume.vue";
+
 const { songInfo } = usePlaySongInfo();
 const playType = ref(player.playType);
+
 function togglePlayType() {
-  playType.value = player.playType = playType.value === "normal" ? "loop" : "normal";
+  playType.value = player.changePlayType();
 }
 
 const isMicrophone = ref(player.audioPlus.mic);
@@ -99,8 +103,9 @@ onUnmounted(() => {
     </div>
     <SongDetailProgress />
     <div class="song-detail-control-btns song-detail-control-main-btn">
-      <PlayCycle v-if="playType === 'normal'" size="20" @click="togglePlayType" />
-      <PlayOnce v-if="playType === 'loop'" size="20" @click="togglePlayType" />
+      <PlayCycle v-if="playType === EPlayType.Normal" size="20" @click="togglePlayType" />
+      <PlayOnce v-if="playType === EPlayType.Loop" size="20" @click="togglePlayType" />
+      <ShuffleOne v-if="playType === EPlayType.Random" size="20" @click="togglePlayType" />
       <GoStart size="30" @click="player.prevSong()" />
       <Pause v-if="songInfo.isPlaying" size="48" @click.stop="player.playOrPause()" />
       <PlayOne v-else size="48" @click.stop="player.playOrPause()" />
