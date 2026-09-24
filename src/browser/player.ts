@@ -238,6 +238,7 @@ window.addEventListener("keydown", e => {
         ? undefined
         : currentSong.lyric?.[player.lyricShow.currentLineIndex + xs]?.[0]?.absoluteTime;
       player.audio.currentTime = time ? time / 1000 : player.audio.currentTime + (e.ctrlKey ? 10 : 5) * xs;
+      break;
     case "ArrowDown":
       player.audioPlus.volume = Math.max(0, player.audioPlus.volume - (e.ctrlKey ? 0.2 : 0.1));
       break;
