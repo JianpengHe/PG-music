@@ -10,6 +10,7 @@ import { ref, watch } from "vue";
 import { QQmusicSDK } from "./QQmusicSDK";
 import { debouncedFn } from "./player";
 
+const numPerPage = Math.min(Math.max(Math.round(((innerHeight / 80) * 2) / 10) * 10, 10), 40);
 const kw = ref("");
 const smartTips = ref<string[]>([]);
 const songList = ref<ISong[]>([]);
@@ -20,7 +21,7 @@ const submit = async (pageNum = 1) => {
   canReqSearch = false;
   // console.log("发起搜索", value, pageNum);
   curPageNum = pageNum;
-  const res = (await QQmusicSDK.search(kw.value, pageNum, 20)).list.map(
+  const res = (await QQmusicSDK.search(kw.value, pageNum, numPerPage)).list.map(
     ({ id, mid, name, singer, album, file, mv }) => ({
       start: 0,
       id,

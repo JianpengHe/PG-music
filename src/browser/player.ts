@@ -134,7 +134,11 @@ export class Player {
         if (!this.songListMap.has(songInfo.id)) songInfo.isTemp = true;
         this.songListMap.set(songInfo.id, songInfo);
         this.changeSongListMap();
-        this.lyricShow.loadLyric(songInfo.lyric);
+        this.lyricShow.loadLyric(
+          songInfo.lyric.length
+            ? songInfo.lyric
+            : [[{ timeGap: 0, absoluteTime: 0, duration: 0, text: "【暂无歌词】" }]],
+        );
         this.currentSongId = songInfo.id;
         this.audio.src = songInfo.src;
         this.audio.currentTime = songInfo.start;

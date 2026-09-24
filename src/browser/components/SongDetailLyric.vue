@@ -25,10 +25,12 @@ let timer = 0;
 function setCDTime() {
   cdTime = performance.now() + 3000;
   if (timer) clearTimeout(timer);
-  timer = setTimeout(() => {
-    timer = 0;
-    myEvent.emit("changeLyric", undefined);
-  }, 3100);
+  timer = Number(
+    setTimeout(() => {
+      timer = 0;
+      myEvent.emit("changeLyric", undefined);
+    }, 3100),
+  );
 }
 function moveStart() {
   cdTime = Infinity;
@@ -40,10 +42,12 @@ function moveStart() {
 }
 
 onMounted(() => {
+  myEvent.on("loadSong", changeLyric);
   myEvent.on("changeLyric", changeLyric);
   myEvent.emit("changeLyric", undefined);
 });
 onUnmounted(() => {
+  myEvent.off("loadSong", changeLyric);
   myEvent.off("changeLyric", changeLyric);
   myEvent.emit("changeLyric", undefined);
 });

@@ -494,9 +494,7 @@ export class LyricShow {
   /* ======================= 歌词加载 ======================= */
 
   public loadLyric(lines: LyricToken[][]) {
-    this.lyricLines = lines.length
-      ? [...lines]
-      : [[{ timeGap: 0, absoluteTime: 0, duration: 0, text: "【暂无歌词】" }]];
+    this.lyricLines = [...lines];
     this.lineShowTimeList.length = 0;
 
     /**
@@ -508,19 +506,20 @@ export class LyricShow {
      * - 第 0 行不会在这里生成时间
      * - 真正使用的是「下一行 > 当前时间」的判定方式
      */
-    this.lyricLines.reduce((prevLine, currentLine) => {
-      const prevLastToken = prevLine[prevLine.length - 1];
+    if (this.lyricLines.length)
+      this.lyricLines.reduce((prevLine, currentLine) => {
+        const prevLastToken = prevLine[prevLine.length - 1];
 
-      const prevLineEndTime = prevLastToken.absoluteTime + prevLastToken.duration;
+        const prevLineEndTime = prevLastToken.absoluteTime + prevLastToken.duration;
 
-      const currentLineStartTime = currentLine[0].absoluteTime;
+        const currentLineStartTime = currentLine[0].absoluteTime;
 
-      // 中点时间（略微提前 10ms，用于观感与定时器误差修正）
-      const showTime = currentLineStartTime - (currentLineStartTime - prevLineEndTime) / 2 - 50;
+        // 中点时间（略微提前 10ms，用于观感与定时器误差修正）
+        const showTime = currentLineStartTime - (currentLineStartTime - prevLineEndTime) / 2 - 50;
 
-      this.lineShowTimeList.push(showTime);
-      return currentLine;
-    });
+        this.lineShowTimeList.push(showTime);
+        return currentLine;
+      });
 
     /**
      * 末尾追加一个哨兵时间
