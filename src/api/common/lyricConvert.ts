@@ -373,6 +373,35 @@ export const encodeLyricToken = (() => {
   };
 })();
 
+export const encodeLcrLyricToken = (lcrStr: string) => {
+  const list = [
+    ...lcrStr.matchAll(
+      /(?:\[(?:(\d{1,2}):)?(\d{1,2}):(\d{2})(?:\.(\d{1,3}))?\]|<(?:(\d{1,2}):)?(\d{1,2}):(\d{2})(?:\.(\d{1,3}))?>)/g,
+    ),
+  ].map(arr => ({
+    absoluteTime:
+      Number(arr[1] ?? arr[5] ?? 0) * 3600000 +
+      Number(arr[2] ?? arr[6] ?? 0) * 60000 +
+      Number(arr[3] ?? arr[7] ?? 0) * 1000 +
+      Number(arr[4] ?? arr[8] ?? 0),
+    index: arr.index,
+    timeStr: arr[0],
+  }));
+  const o: LyricToken[] = [];
+  list.forEach(({ absoluteTime, index, timeStr }, i) => {
+    let text = lcrStr.substring(index + timeStr.length, list[i + 1]?.index ?? lcrStr.length);
+    const duration = (list[i + 1]?.absoluteTime ?? absoluteTime + 500) - absoluteTime;
+    if (!text || duration === 0) return;
+    const obj = { timeGap: 0, absoluteTime, text, duration };
+    o.push(obj);
+    if (text.endsWith("\n")) {
+      obj.text = text.substring(0, text.length - 1);
+      o.push({ timeGap: 0, absoluteTime: absoluteTime + duration, text: "\n", duration: 0 });
+    }
+  });
+  return o;
+};
+
 export const stringToLyricToken = (() => {
   /**
    * 解码时间间隔数值

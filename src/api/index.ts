@@ -1,16 +1,19 @@
 import { DataStorage, IDataStorage } from "../../../code-snippet/common/DataStorage";
-import { encodeLyricToken } from "./common/lyricConvert";
+import { LyricToken, encodeLcrLyricToken, encodeLyricToken } from "./common/lyricConvert";
 import { lyricDecoder } from "./common/lyricDecoder";
 import {
   base64ToUint8Array,
-  inflateUint8Array,
   isServer,
   jsonpFetch,
   QQserverUrlSmartbox,
+  uint8Array8ToBase64,
   uint8ArrayToString,
+  unzip,
+  zip,
 } from "./common/utils";
 export type IQQmusicAPIDataStorage = {
   url: IDataStorage<Record<string, { url: string; file: string; expire: number }>>;
+  lyric: IDataStorage<Record<string, LyricToken[]>>;
 };
 const QQmusicAPIDataStorage: IQQmusicAPIDataStorage = {
   url: {
@@ -37,6 +40,11 @@ const QQmusicAPIDataStorage: IQQmusicAPIDataStorage = {
         .map(({ url, expire }) => `${expire}${url}`)
         .join("\n");
     },
+  },
+  lyric: {
+    data: {},
+    read: async val => JSON.parse(await unzip(base64ToUint8Array(val))),
+    write: async val => uint8Array8ToBase64(new Uint8Array(await zip(JSON.stringify(val)))),
   },
 };
 
@@ -76,6 +84,8 @@ export class QQmusicAPI {
     return resData?.data?.song?.itemlist?.map(({ name, singer }: any) => `${name} ${singer}`) || [];
   }
   public async lyric(songID: number) {
+    const lyric = this.storage.get("lyric")[String(songID)];
+    if (lyric) return lyric;
     const { code, data } = await this.request("GetPlayLyricInfo", "music.musichallSong.PlayLyricInfo", {
       qrc: 1,
       qrc_t: 0,
@@ -89,11 +99,16 @@ export class QQmusicAPI {
     if (code !== 0) throw new Error("获取歌词失败");
     try {
       const raw = data.qrc
-        ? await inflateUint8Array(lyricDecoder(data.lyric))
+        ? await unzip(lyricDecoder(data.lyric), "deflate")
         : uint8ArrayToString(base64ToUint8Array(data.lyric));
-      // TODO： 支持 LRC 格式歌词
-      if (!data.qrc) console.log("暂不支持 LRC 格式歌词");
-      return encodeLyricToken(raw, []);
+      const lyricTokens = data.qrc ? encodeLyricToken(raw, []) : encodeLcrLyricToken(raw);
+      const lyricMap = this.storage.get("lyric");
+      const keys = Object.keys(lyricMap);
+      /** 最多缓存30首歌的歌词，超出部分删除 */
+      if (keys.length > 30) for (const id of keys.slice(0, 30 - keys.length)) delete lyricMap[id];
+      lyricMap[String(songID)] = lyricTokens;
+      this.storage.set("lyric", lyricMap);
+      return lyricTokens;
     } catch (error: unknown) {
       console.error("处理歌词数据时出错:", error);
       return [];

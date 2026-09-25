@@ -41,29 +41,31 @@ export const decrypt = async (algorithm: string, key: Uint8Array<any>, iv: Uint8
     data,
   );
 
-/**
- * 使用浏览器原生API解压缩Uint8Array格式的inflate数据
- * 该函数将压缩的二进制数据转换为可读文本
- * @param {Uint8Array} compressedData - 压缩后的数据
- * @returns {Promise<string>} 解压后的文本数据
- */
-export const inflateUint8Array = async (compressedData: Uint8Array<any>): Promise<string> => {
-  try {
-    // 去除尾部无效的 0
-    let end = compressedData.length;
-    while (end > 0 && compressedData[end - 1] === 0) end--;
+export const zip = (str: string, format: CompressionFormat = "gzip") => {
+  const compressed = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(new TextEncoder().encode(str));
+      controller.close();
+    },
+  }).pipeThrough(new CompressionStream(format));
 
-    const stream = new Blob([compressedData.subarray(0, end)]).stream().pipeThrough(new DecompressionStream("deflate"));
-
-    // 直接用 Response 读取解压后的 ArrayBuffer
-    const buffer = await new Response(stream).arrayBuffer();
-
-    return new TextDecoder().decode(buffer);
-  } catch (err) {
-    console.error("解压数据时出错:", err);
-    throw new Error("解压数据失败: " + (err instanceof Error ? err.message : String(err)));
-  }
+  return new Response(compressed).arrayBuffer();
 };
+export const unzip = async (data: BufferSource, format: CompressionFormat = "gzip"): Promise<string> => {
+  const decompressed = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(
+        data instanceof ArrayBuffer
+          ? new Uint8Array(data)
+          : new Uint8Array(data.buffer, data.byteOffset, data.byteLength),
+      );
+      controller.close();
+    },
+  }).pipeThrough(new DecompressionStream(format));
+
+  return new Response(decompressed).text();
+};
+
 export const jsonpFetch = (reqObj: Record<string, any>, host: string, callbackParam = "callback"): Promise<any> => {
   // 创建唯一的JSONP回调函数名
   const callbackName = `penggeJsonp${String(Math.random()).substring(2)}`;

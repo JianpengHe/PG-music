@@ -484,6 +484,10 @@ export function lyricDecoder(hexString: string): Uint8Array {
   // 3. 使用第三个密钥进行解密
   Ddes(data, FINAL_DECRYPT_KEY);
 
+  // 去除尾部无效的 0
+  let end = data.length;
+  while (end > 0 && data[end - 1] === 0) end--;
+
   // 返回解码后的数据（通常需要进一步用zlib解压缩）
-  return data;
+  return data.subarray(0, end);
 }
