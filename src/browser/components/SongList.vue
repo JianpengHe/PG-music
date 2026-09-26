@@ -4,15 +4,17 @@ import { PlayOne, Pause, CollectionRecords, Like, MusicOne } from "@icon-park/vu
 import { usePlaySongInfo } from "../hooks/usePlaySongInfo";
 import { myEvent } from "../event";
 import { player } from "../player";
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import { usePlaySongList } from "../hooks/usePlaySongList";
 import { router } from "../router";
+import type { VirtualScrollItem } from "../hooks/useVirtualScroll";
 
 export type SongListProps = {
-  kw: string;
-  list: ISong[];
+  list: VirtualScrollItem<ISong>[];
+  renderVirtualScroll: () => void;
+  parentHeight: number;
 };
-const { kw, list } = defineProps<SongListProps>();
+const props = defineProps<SongListProps>();
 const { songInfo } = usePlaySongInfo();
 const songList = usePlaySongList(
   data => new Map([...data.values()].filter(({ isTemp }) => isTemp !== true).map(item => [item.id, item])),
@@ -44,32 +46,42 @@ const setSong = async (item: ISong, e: PointerEvent) => {
 };
 
 const iconTemplate = ref<HTMLElement>();
+onMounted(() => props.renderVirtualScroll());
 </script>
 <template>
-  <div class="song-list">
+  <div class="song-list" :style="{ height: `${props.parentHeight}px` }">
     <div
-      v-for="item in kw ? list : [...songList.values()]"
-      :key="item.id"
+      v-for="item in props.list"
+      :key="item.key + '-' + (item.data?.id ?? 0)"
       class="song-item"
-      @click="e => setSong(item, e)"
+      @click="e => item.data && setSong(item.data, e)"
+      :style="{ transform: `translateY(${item.top}px)` }"
+      v-show="item.data"
+      :data-index="item.data ? item.index : -1"
     >
-      <img :src="item.pic" alt="" />
-      <div class="song-item-info">
-        <h3>{{ item.name }}</h3>
-        <h4>{{ item.singer }}</h4>
-      </div>
-      <div class="song-item-icons">
-        <Like
-          v-if="songList.has(item.id)"
-          size="20"
-          theme="filled"
-          class="active"
-          @click.stop="player.deleteSong(item.id)"
-        />
-        <CollectionRecords v-else size="20" @click.stop="player.addSong(item)" />
-        <Pause v-if="item.id === songInfo.id && songInfo.isPlaying" size="20" @click.stop="player.playOrPause()" />
-        <PlayOne v-else size="20" />
-      </div>
+      <template v-if="item.data">
+        <img :src="item.data?.pic" alt="" />
+        <div class="song-item-info">
+          <h3>{{ item.data.name }}</h3>
+          <h4>{{ item.data.singer }}</h4>
+        </div>
+        <div class="song-item-icons">
+          <Like
+            v-if="songList.has(item.data.id)"
+            size="20"
+            theme="filled"
+            class="active"
+            @click.stop="player.deleteSong(item.data.id)"
+          />
+          <CollectionRecords v-else size="20" @click.stop="player.addSong(item.data)" />
+          <Pause
+            v-if="item.data.id === songInfo.id && songInfo.isPlaying"
+            size="20"
+            @click.stop="player.playOrPause()"
+          />
+          <PlayOne v-else size="20" />
+        </div>
+      </template>
     </div>
     <MusicOne size="24" style="display: none" ref="iconTemplate" class="icon-template" />
   </div>
@@ -78,13 +90,16 @@ const iconTemplate = ref<HTMLElement>();
 .song-list {
   position: relative;
   background-color: var(--color-surface);
-  display: flex;
+  /* display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 8px;
+  margin-top: 8px; */
   cursor: pointer;
+  overflow: hidden;
 }
 .song-item {
+  position: absolute;
+  top: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
