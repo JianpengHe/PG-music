@@ -24,6 +24,7 @@ export type IEventList = {
   changeLyric: void;
   changeSongList: Map<ISongInfo["id"], ISongListItem>;
   openSongDetailPage: void; //: { clientX: number; clientY: number } | null;
+  toSearch: string;
 };
 
 type EventMap = {

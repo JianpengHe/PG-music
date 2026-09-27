@@ -69,6 +69,9 @@ function setVolume(value: boolean) {
 //     target = target.parentElement;
 //   }
 // }
+function toSearch(kw: string) {
+  myEvent.emit("toSearch", kw);
+}
 watch(
   () => songInfo.value.id,
   id => {
@@ -110,7 +113,7 @@ onUnmounted(() => {
       <Pause v-if="songInfo.isPlaying" size="48" @click.stop="player.playOrPause()" />
       <PlayOne v-else size="48" @click.stop="player.playOrPause()" />
       <GoEnd size="30" @click="player.nextSong()" />
-      <ListBottom size="20" />
+      <ListBottom size="20" @click="toSearch('')" />
     </div>
   </div>
   <div v-if="isVolume" class="song-detail-volume-dialog-mask" @pointerdown="setVolume(false)"></div>

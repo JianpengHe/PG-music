@@ -3,8 +3,12 @@ import { usePlaySongInfo } from "../hooks/usePlaySongInfo";
 import SongDetailLyric from "./SongDetailLyric.vue";
 import SongDetailControl from "./SongDetailControl.vue";
 import { imgError } from "../../api/common/utils";
+import { myEvent } from "../event";
 
 const { songInfo } = usePlaySongInfo();
+function toSearch() {
+  myEvent.emit("toSearch", songInfo.value.singer);
+}
 </script>
 <template>
   <div class="song-detail">
@@ -12,7 +16,7 @@ const { songInfo } = usePlaySongInfo();
     <img class="song-detail-pic-bg" :src="songInfo.pic" alt="" @error="imgError" />
     <div class="song-detail-content">
       <div class="song-detail-name">{{ songInfo.name }}</div>
-      <div class="song-detail-singer">{{ songInfo.singer }}</div>
+      <div class="song-detail-singer" @click="toSearch">{{ songInfo.singer }}</div>
       <SongDetailLyric />
       <SongDetailControl />
     </div>
@@ -60,5 +64,13 @@ const { songInfo } = usePlaySongInfo();
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+.song-detail-name {
+  font-size: 18px;
+  margin-top: 8px;
+}
+.song-detail-singer {
+  font-size: 14px;
+  color: var(--color-border-hover);
 }
 </style>
