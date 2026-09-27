@@ -137,7 +137,7 @@ export class Player {
     myEvent.on("setSong", async ({ detail }) => {
       this.audio.pause();
       this.audio.src = "data:audio/mp3;base64,";
-      this.audioPlus.audioContext.resume();
+      if (this.audioPlus.audioContext.state !== "running") this.audioPlus.audioContext.resume();
       this.lyricShow.loadLyric([]);
       /** 旧歌曲 */
       const oldSong = this.songListMap.get(this.currentSongId);
@@ -180,6 +180,7 @@ export class Player {
     });
   }
   public playOrPause() {
+    if (this.audioPlus.audioContext.state !== "running") this.audioPlus.audioContext.resume();
     if (this.isPlaying) {
       this.audio.pause();
     } else {

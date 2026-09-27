@@ -12,11 +12,13 @@ export function usePlaySongInfo() {
   onMounted(() => {
     myEvent.on("playSong", updateState);
     myEvent.on("pauseSong", updateState);
+    myEvent.on("loadSong", updateState);
   });
 
   onUnmounted(() => {
     myEvent.off("playSong", updateState);
     myEvent.off("pauseSong", updateState);
+    myEvent.off("loadSong", updateState);
   });
 
   return { songInfo };
