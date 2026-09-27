@@ -80,7 +80,7 @@ onMounted(() => props.renderVirtualScroll());
             size="20"
             @click.stop="player.playOrPause()"
           />
-          <PlayOne v-else size="20" />
+          <PlayOne v-else size="20" @click.stop="player.playOrPause()" />
         </div>
       </template>
     </div>

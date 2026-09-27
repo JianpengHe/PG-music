@@ -84,6 +84,7 @@ export class QQmusicAPI {
     return resData?.data?.song?.itemlist?.map(({ name, singer }: any) => `${name} ${singer}`) || [];
   }
   public async lyric(songID: number) {
+    await this.storage.isInitialized;
     const lyric = this.storage.get("lyric")[String(songID)];
     if (lyric) return lyric;
     const { code, data } = await this.request("GetPlayLyricInfo", "music.musichallSong.PlayLyricInfo", {
@@ -172,6 +173,7 @@ export class QQmusicAPI {
   }
 
   public async playURL(songmid: string, fileName: string) {
+    await this.storage.isInitialized;
     const urlMap = this.storage.get("url");
     if (urlMap[fileName] && urlMap[fileName].expire > Math.floor(Date.now() / 1000)) return urlMap[fileName].url;
     const { data } = await this.request("CgiGetVkey", "vkey.GetVkeyServer", {

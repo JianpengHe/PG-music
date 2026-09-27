@@ -22,17 +22,8 @@ const songList = ref<ISong[]>([]);
 let canReqSearch = true;
 const submit = async (pageNum = 1) => {
   smartTips.value = [];
-  if (!kw.value) {
-    let list = [...player.songListMap.values()].filter(item => item.isTemp !== true);
-    // list = Array(100)
-    //   .fill(list)
-    //   .map((data, index) => data.map((item: any) => ({ ...item, id: item.id + index * 1e10, name: item.name + index })))
-    //   .flat()
-    //   .map((item, index) => ({ ...item, singer: index }));
-    songList.value = list;
-    render();
-    return;
-  }
+  if (!kw.value) return renderMySongList();
+
   canReqSearch = false;
   // console.log("发起搜索", value, pageNum);
   curPageNum = pageNum;
@@ -59,10 +50,22 @@ const songDetailToSongListItem = ({ id, mid, name, singer, album, file, mv, vi }
   quicklyPos: [vi?.[4]].filter(Boolean),
 });
 
+const renderMySongList = () => {
+  if (kw.value) return;
+  let list = [...player.songListMap.values()]; //.filter(item => item.isTemp !== true);
+  // list = Array(100)
+  //   .fill(list)
+  //   .map((data, index) => data.map((item: any) => ({ ...item, id: item.id + index * 1e10, name: item.name + index })))
+  //   .flat()
+  //   .map((item, index) => ({ ...item, singer: index }));
+  songList.value = list;
+  render();
+};
+
 const appRef = ref<HTMLDivElement>();
 const { render, filterList } = useVirtualScroll(songList, appRef, 80);
 const debounce = debouncedFn(async () => {
-  if (!kw.value) return submit();
+  if (!kw.value) return renderMySongList();
   smartTips.value = (await QQmusicSDK.smartbox(kw.value)) || [];
 }, 500);
 watch(kw, debounce);
@@ -95,11 +98,13 @@ async function setSongFromUrlHash(mid: string) {
 onMounted(() => {
   submit();
   myEvent.on("toSearch", toSearch);
+  myEvent.on("changeSongList", renderMySongList);
   const mid = location.hash.substring(1);
   if (mid) setSongFromUrlHash(mid);
 });
 onUnmounted(() => {
   myEvent.off("toSearch", toSearch);
+  myEvent.off("changeSongList", renderMySongList);
 });
 </script>
 

@@ -98,6 +98,7 @@ export class Player {
   }
 
   public async addSong(song: ISongListItem) {
+    if (song.isTemp === true) delete song.isTemp;
     this.songListMap.set(song.id, song);
     this.changeSongListMap();
   }
