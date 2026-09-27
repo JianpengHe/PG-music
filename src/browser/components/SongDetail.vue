@@ -2,13 +2,14 @@
 import { usePlaySongInfo } from "../hooks/usePlaySongInfo";
 import SongDetailLyric from "./SongDetailLyric.vue";
 import SongDetailControl from "./SongDetailControl.vue";
+import { imgError } from "../../api/common/utils";
 
 const { songInfo } = usePlaySongInfo();
 </script>
 <template>
   <div class="song-detail">
     <div class="song-detail-mask"></div>
-    <img class="song-detail-pic-bg" :src="songInfo.pic" alt="" />
+    <img class="song-detail-pic-bg" :src="songInfo.pic" alt="" @error="imgError" />
     <div class="song-detail-content">
       <div class="song-detail-name">{{ songInfo.name }}</div>
       <div class="song-detail-singer">{{ songInfo.singer }}</div>

@@ -120,6 +120,7 @@ export class QQmusicAPI {
     pageNum: number = 1,
     numPerPage: number = 10,
     searchType: number = 0,
+    errCount: number = 0,
   ): Promise<{
     sum: number;
     list: {
@@ -149,6 +150,8 @@ export class QQmusicAPI {
       vi: number[];
     }[];
   }> {
+    if (!keyword) return { sum: 0, list: [] };
+    if (errCount >= 3) throw new Error("搜索失败");
     let o = { sum: 0, list: [] };
     const res = await this.request("DoSearchForQQMusicDesktop", "music.search.SearchCgiService", {
       num_per_page: numPerPage,
@@ -160,8 +163,10 @@ export class QQmusicAPI {
     if (res?.code === 0) {
       o = { list: res?.data?.body?.song?.list || [], sum: res?.data?.meta?.sum || 0 };
     } else {
-      if (isServer) throw new Error("搜索失败");
-      o = await (await fetch(`${this.serverUrl}/search/${pageNum}/${keyword}`)).json();
+      // if (isServer) throw new Error("搜索失败");
+      // o = await (await fetch(`${this.serverUrl}/search/${pageNum}/${keyword}`)).json();
+      await new Promise(resolve => setTimeout(resolve, Math.random() * 1000 + 1000));
+      return await this.search(keyword, pageNum, numPerPage, searchType, errCount + 1);
     }
     return o;
   }

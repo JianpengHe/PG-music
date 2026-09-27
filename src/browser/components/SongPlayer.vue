@@ -6,6 +6,7 @@ import { onMounted, onUnmounted, ref } from "vue";
 import { myEvent } from "../event";
 import { LyricShow } from "../../api/common/lyricConvert";
 import { router } from "../router";
+import { imgError } from "../../api/common/utils";
 
 const { songInfo } = usePlaySongInfo();
 
@@ -40,7 +41,7 @@ onUnmounted(() => {
     "
     @click="router.openSongDetailPage"
   >
-    <img :src="songInfo.pic" alt="" />
+    <img :src="songInfo.pic" alt="" @error="imgError" />
     <div class="song-item-info">
       <h3>{{ songInfo.name }} - {{ songInfo.singer }}</h3>
       <h4 class="lyric">

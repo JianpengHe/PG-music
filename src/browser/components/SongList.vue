@@ -8,6 +8,7 @@ import { onMounted, ref } from "vue";
 import { usePlaySongList } from "../hooks/usePlaySongList";
 import { router } from "../router";
 import type { VirtualScrollItem } from "../hooks/useVirtualScroll";
+import { imgError } from "../../api/common/utils";
 
 export type SongListProps = {
   list: VirtualScrollItem<ISong>[];
@@ -60,7 +61,7 @@ onMounted(() => props.renderVirtualScroll());
       :data-index="item.data ? item.index : -1"
     >
       <template v-if="item.data">
-        <img :src="item.data?.pic" alt="" />
+        <img :src="item.data?.pic" alt="" @error="imgError" />
         <div class="song-item-info">
           <h3>{{ item.data.name }}</h3>
           <h4>{{ item.data.singer }}</h4>
@@ -92,8 +93,8 @@ onMounted(() => props.renderVirtualScroll());
   background-color: var(--color-surface);
   /* display: flex;
   flex-direction: column;
-  align-items: center;
-  margin-top: 8px; */
+  align-items: center;*/
+  margin-top: 8px;
   cursor: pointer;
   overflow: hidden;
 }

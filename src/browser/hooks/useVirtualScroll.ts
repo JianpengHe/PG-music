@@ -1,22 +1,21 @@
-import { Ref, onUnmounted, ref, watch } from "vue";
-export type VirtualScrollItem<T> = { key: string; index: number; top: number; data: T | undefined };
+import { Ref, onUnmounted, ref } from "vue";
+export type VirtualScrollItem<T extends { id: string | number }> = {
+  key: string;
+  index: number;
+  top: number;
+  data: T | undefined;
+};
 
-export function useVirtualScroll<T extends Record<string, any>>(
+export function useVirtualScroll<T extends { id: string | number }>(
   rawList: Ref<T[]>,
   domRef: Ref<HTMLDivElement | undefined, HTMLDivElement | undefined>,
   height: number,
 ) {
   const filterList = ref<VirtualScrollItem<T>[]>([]);
-  let startIndex = -Infinity;
-  //   let isBusy = false;
-  //   let needNextCall = false;
   let rafId: number | null = null;
   let parentHeight = 0;
   const render = () => {
-    if (rafId) {
-      //   needNextCall = true;
-      return;
-    }
+    if (rafId) return;
     rafId = requestAnimationFrame(() => {
       rafId = null;
       calc();
@@ -26,25 +25,20 @@ export function useVirtualScroll<T extends Record<string, any>>(
     const dom = domRef.value;
     if (!dom) return console.error("domRef.value is undefined");
     // console.log("calc");
-    const curParentHeight = rawList.value.length * height;
-    if (curParentHeight !== parentHeight) {
-      //   dom.style.height = `${curParentHeight}px`;
-      parentHeight = curParentHeight;
-    }
+    parentHeight = rawList.value.length * height;
     const visibleHeight = dom.clientHeight;
-    const renderHeight = visibleHeight * 3;
+    const renderHeight = visibleHeight * 2;
     const maxItemCount = Math.round(renderHeight / height);
 
     /** 隐藏顶部项数量 */
     // const hiddenTopItemCount = dom.scrollTop / height;
-    const curStartIndex = Math.round((dom.scrollTop - (renderHeight - visibleHeight) / 2) / height);
-    // if (curStartIndex !== startIndex) {
-    startIndex = curStartIndex;
+    const startIndex = Math.round((dom.scrollTop - (renderHeight - visibleHeight) / 2) / height);
+
     const curFilterListMap: Map<string, VirtualScrollItem<T>> = new Map();
     let noneCount = 0;
     for (let index = startIndex; index < startIndex + maxItemCount; index++) {
       const data = rawList.value[index];
-      const key = data ? data.id : "None_" + noneCount++;
+      const key = data ? String(data.id) : "None_" + noneCount++;
       curFilterListMap.set(key, {
         key,
         index,
@@ -68,30 +62,9 @@ export function useVirtualScroll<T extends Record<string, any>>(
       .filter(Boolean)
       .slice(0, maxItemCount) as VirtualScrollItem<T>[];
     if (oldFilterList.map(item => item.key).join(",") === newFilterList.map(item => item.key).join(",")) return;
-    // console.log(oldFilterList.map(item => item.key).join(","), newFilterList.map(item => item.key).join(","));
     filterList.value = newFilterList;
-    // }
-
-    // console.log(
-    //   "clientHeight",
-    //   dom.clientHeight,
-    //   "scrollTop",
-    //   dom.scrollTop,
-    //   "startIndex",
-    //   startIndex,
-    //   "endIndex",
-    //   startIndex + renderHeight / height,
-
-    //   "renderHeight",
-    //   renderHeight,
-    // );
   };
-  watch(rawList, render);
-  //   onMounted(() => {
-  //     console.log(domRef.value);
-  //     render();
-  //     domRef.value?.addEventListener("scroll", render);
-  //   });
+  // watch(rawList, render);
   onUnmounted(() => {
     if (rafId) {
       cancelAnimationFrame(rafId);
