@@ -6,7 +6,7 @@ import { onMounted, onUnmounted, ref } from "vue";
 import { myEvent } from "../event";
 import { LyricShow } from "../../api/common/lyricConvert";
 import { router } from "../router";
-import { imgError } from "../../api/common/utils";
+import { imgError } from "../util";
 
 const { songInfo } = usePlaySongInfo();
 

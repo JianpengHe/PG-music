@@ -5,13 +5,14 @@ import SearchSong from "@/components/SearchSong.vue";
 import SongList from "@/components/SongList.vue";
 import SongPlayer from "@/components/SongPlayer.vue";
 import SongDetailPage from "@/components/SongDetailPage.vue";
-import type { ISong } from "./types";
+import type { ISong, ISongListItem } from "./types";
 import { onMounted, onUnmounted, ref, watch } from "vue";
 import { QQmusicSDK } from "./QQmusicSDK";
 import { debouncedFn } from "./util";
 import { player } from "./player";
 import { useVirtualScroll } from "./hooks/useVirtualScroll";
 import { myEvent } from "./event";
+import { router } from "./router";
 
 const numPerPage = Math.min(Math.max(Math.round(((innerHeight / 80) * 2) / 10) * 10, 10), 40);
 const kw = ref("");
@@ -35,21 +36,7 @@ const submit = async (pageNum = 1) => {
   canReqSearch = false;
   // console.log("发起搜索", value, pageNum);
   curPageNum = pageNum;
-  const res = (await QQmusicSDK.search(kw.value, pageNum, numPerPage)).list.map(
-    ({ id, mid, name, singer, album, file, mv, vi }) => ({
-      start: 0,
-      id,
-      mid,
-      name,
-      singer: singer.map(item => item.name).join("、"),
-      pic: QQmusicSDK.getMusicImgUrl(album.pmid),
-      media_mid: file.media_mid,
-      mv_mid: mv?.vid,
-      album_name: album.name || name,
-      /** 高潮时间点 */
-      quicklyPos: [vi?.[4]].filter(Boolean),
-    }),
-  );
+  const res = (await QQmusicSDK.search(kw.value, pageNum, numPerPage)).list.map(songDetailToSongListItem);
   const map = new Map(pageNum === 1 ? [] : songList.value.map(item => [item.id, item]));
   for (const item of res) map.set(item.id, item);
   songList.value = [...map.values()];
@@ -58,6 +45,20 @@ const submit = async (pageNum = 1) => {
   setTimeout(tryLoadMore, 100);
   if (res.length) canReqSearch = true;
 };
+const songDetailToSongListItem = ({ id, mid, name, singer, album, file, mv, vi }: any): ISong => ({
+  start: 0,
+  id,
+  mid,
+  name,
+  singer: singer.map(({ name }: any) => name).join("、"),
+  pic: QQmusicSDK.getMusicImgUrl(album.pmid),
+  media_mid: file.media_mid,
+  mv_mid: mv?.vid,
+  album_name: album.name || name,
+  /** 高潮时间点 */
+  quicklyPos: [vi?.[4]].filter(Boolean),
+});
+
 const appRef = ref<HTMLDivElement>();
 const { render, filterList } = useVirtualScroll(songList, appRef, 80);
 const debounce = debouncedFn(async () => {
@@ -81,9 +82,21 @@ function toSearch({ detail }: CustomEvent<string>) {
   if (location.hash) history.back();
 }
 
+async function setSongFromUrlHash(mid: string) {
+  router.updateHash();
+  let song: ISongListItem | undefined = [...player.songListMap.values()].find(item => item.mid === mid);
+  if (!song) song = songDetailToSongListItem((await QQmusicSDK.songDetail(mid))?.track_info || {});
+  if (!song) return;
+  myEvent.emit("setSong", song);
+  router.openSongDetailPagePos = { x: 0, y: 0 };
+  myEvent.emit("openSongDetailPage", undefined);
+}
+
 onMounted(() => {
   submit();
   myEvent.on("toSearch", toSearch);
+  const mid = location.hash.substring(1);
+  if (mid) setSongFromUrlHash(mid);
 });
 onUnmounted(() => {
   myEvent.off("toSearch", toSearch);

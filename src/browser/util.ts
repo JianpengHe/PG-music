@@ -46,3 +46,9 @@ export function debouncedFn(callback: () => Promise<void>, minDelay = 500) {
 
   return handle;
 }
+
+export const imgError = (e: Event) => {
+  const img = e.target as HTMLImageElement;
+  const url = "https://www.hejianpeng.cn/images/music.jpg";
+  if (img.src !== url) img.src = url;
+};

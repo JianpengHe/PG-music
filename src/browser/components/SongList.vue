@@ -8,7 +8,7 @@ import { onMounted, ref } from "vue";
 import { usePlaySongList } from "../hooks/usePlaySongList";
 import { router } from "../router";
 import type { VirtualScrollItem } from "../hooks/useVirtualScroll";
-import { imgError } from "../../api/common/utils";
+import { imgError } from "../util";
 
 export type SongListProps = {
   list: VirtualScrollItem<ISong>[];

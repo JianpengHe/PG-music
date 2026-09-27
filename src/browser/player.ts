@@ -68,18 +68,20 @@ export class Player {
   // }
   private changeSongListMap() {
     myEvent.emit("changeSongList", this.songListMap);
-    const songList: ISong[] = [...this.songListMap.values()].map(song => ({
-      start: song.start,
-      name: song.name,
-      singer: song.singer,
-      id: song.id,
-      mid: song.mid,
-      pic: song.pic,
-      media_mid: song.media_mid,
-      mv_mid: song.mv_mid,
-      album_name: song.album_name,
-      quicklyPos: song.quicklyPos,
-    }));
+    const songList: ISong[] = [...this.songListMap.values()]
+      .filter(song => song.isTemp !== true)
+      .map(song => ({
+        start: song.start,
+        name: song.name,
+        singer: song.singer,
+        id: song.id,
+        mid: song.mid,
+        pic: song.pic,
+        media_mid: song.media_mid,
+        mv_mid: song.mv_mid,
+        album_name: song.album_name,
+        quicklyPos: song.quicklyPos,
+      }));
     setLocalStorage(ELocalStorageKey.SongList, JSON.stringify(songList));
   }
   public deleteSong(id: ISongInfo["id"]) {

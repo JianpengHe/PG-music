@@ -2,8 +2,8 @@
 import { usePlaySongInfo } from "../hooks/usePlaySongInfo";
 import SongDetailLyric from "./SongDetailLyric.vue";
 import SongDetailControl from "./SongDetailControl.vue";
-import { imgError } from "../../api/common/utils";
 import { myEvent } from "../event";
+import { imgError } from "../util";
 
 const { songInfo } = usePlaySongInfo();
 function toSearch() {
@@ -72,5 +72,7 @@ function toSearch() {
 .song-detail-singer {
   font-size: 14px;
   color: var(--color-border-hover);
+  z-index: 10000;
+  cursor: pointer;
 }
 </style>
