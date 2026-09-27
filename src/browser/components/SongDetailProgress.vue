@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { player } from "../player";
 import { onMounted, onUnmounted, ref } from "vue";
+import { formatTime } from "../util";
 export type SongDetailProgressProps = {
   quicklyPos: number[];
 };
@@ -13,14 +14,6 @@ function update() {
   const audio = player.audio;
   duration.value = Number.isFinite(audio.duration) ? Math.floor(audio.duration) : 0;
   if (!isDragging.value) currentTime.value = Math.floor(audio.currentTime);
-}
-
-function formatTime(time: number) {
-  if (!Number.isFinite(time) || time < 0) {
-    return "00:00";
-  }
-
-  return `${String(Math.floor(time / 60)).padStart(2, "0")}:${String(Math.floor(time % 60)).padStart(2, "0")}`;
 }
 
 const progress = () => {

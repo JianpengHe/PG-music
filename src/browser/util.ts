@@ -52,3 +52,11 @@ export const imgError = (e: Event) => {
   const url = "https://www.hejianpeng.cn/images/music.jpg";
   if (img.src !== url) img.src = url;
 };
+
+export function formatTime(time: number) {
+  if (!Number.isFinite(time) || time < 0) {
+    return "00:00";
+  }
+
+  return `${String(Math.floor(time / 60)).padStart(2, "0")}:${String(Math.floor(time % 60)).padStart(2, "0")}`;
+}
