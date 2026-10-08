@@ -223,6 +223,8 @@ export class Player {
 // window.audioPlus = audioPlus;
 
 export const player = new Player();
+// @ts-ignore
+window.player = player;
 
 if ("mediaSession" in navigator) {
   navigator.mediaSession.setActionHandler("play", () => player.playOrPause());

@@ -6,7 +6,10 @@ import { viteSingleFile } from "vite-plugin-singlefile";
 export default defineConfig(({ command }) => {
   return {
     // 关键点：如果是 build 状态才加载单文件插件，开发环境(serve)不加载
-    plugins: [vue(), command === "build" ? viteSingleFile() : null],
+    plugins: [
+      vue(),
+      // command === "build" ? viteSingleFile() : null
+    ],
     root: "src/browser",
     base: "./",
 

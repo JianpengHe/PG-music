@@ -34,15 +34,12 @@ onUnmounted(() => {
 </script>
 <template>
   <div
-    class="song-item"
-    :class="{ musicPlaying: songInfo.isPlaying }"
-    :style="
-      !!songInfo.id && !isOpenOpenSongDetailPage ? 'transform: translate(-50%, 0)' : 'transform: translate(-50%, 120%)'
-    "
+    class="song-panel"
+    :class="{ musicPlaying: songInfo.isPlaying, 'song-panel-hidden': !songInfo.id || isOpenOpenSongDetailPage }"
     @click="router.openSongDetailPage"
   >
     <img :src="songInfo.pic" alt="" @error="imgError" />
-    <div class="song-item-info">
+    <div class="song-panel-info">
       <h3>{{ songInfo.name }} - {{ songInfo.singer }}</h3>
       <h4 class="lyric">
         <span
@@ -54,14 +51,14 @@ onUnmounted(() => {
         >
       </h4>
     </div>
-    <div class="song-item-icons">
+    <div class="song-panel-icons">
       <Pause v-if="songInfo.isPlaying" size="36" @click.stop="player.playOrPause()" />
       <PlayOne v-else size="36" @click.stop="player.playOrPause()" />
     </div>
   </div>
 </template>
 <style scoped>
-.song-item {
+.song-panel {
   position: fixed;
   bottom: 12px;
   left: 50%;
@@ -80,8 +77,12 @@ onUnmounted(() => {
   background-color: rgba(247, 248, 252, 0.66);
   z-index: 10000;
   cursor: pointer;
+  transform: translate(-50%, 0);
 }
-.song-item > img {
+.song-panel-hidden {
+  transform: translate(-50%, 120%);
+}
+.song-panel > img {
   width: 48px;
   height: 48px;
   border-radius: 50%;
@@ -91,10 +92,10 @@ onUnmounted(() => {
   animation-timing-function: linear;
   animation-play-state: paused;
 }
-.musicPlaying.song-item > img {
+.musicPlaying.song-panel > img {
   animation-play-state: running;
 }
-.song-item-info {
+.song-panel-info {
   flex: 1;
   min-width: 0;
   display: flex;
@@ -104,7 +105,7 @@ onUnmounted(() => {
   gap: 4px;
   padding: 2px 0;
 }
-.song-item-info > h3 {
+.song-panel-info > h3 {
   font-size: 16px;
   line-height: 16px;
   font-weight: 500;
@@ -114,7 +115,7 @@ onUnmounted(() => {
   white-space: nowrap;
   width: 100%;
 }
-.song-item-info > h4 {
+.song-panel-info > h4 {
   font-size: 14px;
   line-height: 14px;
   font-weight: 450;
@@ -129,7 +130,7 @@ h3,
 h4 {
   margin: 0;
 }
-.song-item-icons {
+.song-panel-icons {
   display: flex;
   align-items: center;
   gap: 8px;

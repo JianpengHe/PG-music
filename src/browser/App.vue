@@ -129,6 +129,7 @@ onUnmounted(() => {
   position: relative;
   overflow: auto;
   width: 100%;
+  text-align: left;
 }
 .app::-webkit-scrollbar {
   display: none;
@@ -139,8 +140,9 @@ onUnmounted(() => {
 }
 .container {
   margin-top: 24px;
-  width: 100vmin;
-  width: 100dvmin;
+  width: 100%;
+  max-width: 100vmin;
+  max-width: 100dvmin;
   min-width: 375px;
   position: absolute;
 }
